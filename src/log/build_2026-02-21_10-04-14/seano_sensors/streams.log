@@ -1,0 +1,27 @@
+[1.303s] Invoking command in '/home/raihan/seano_ws/src/build/seano_sensors': PYTHONPATH=/home/raihan/seano_ws/src/build/seano_sensors/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/raihan/seano_ws/src/install/seano_sensors/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/raihan/seano_ws/src/build/seano_sensors/build --no-deps symlink_data
+[1.792s] running develop
+[2.363s] running egg_info
+[2.364s] creating seano_sensors.egg-info
+[2.364s] writing seano_sensors.egg-info/PKG-INFO
+[2.364s] writing dependency_links to seano_sensors.egg-info/dependency_links.txt
+[2.365s] writing entry points to seano_sensors.egg-info/entry_points.txt
+[2.365s] writing requirements to seano_sensors.egg-info/requires.txt
+[2.365s] writing top-level names to seano_sensors.egg-info/top_level.txt
+[2.365s] writing manifest file 'seano_sensors.egg-info/SOURCES.txt'
+[2.370s] reading manifest file 'seano_sensors.egg-info/SOURCES.txt'
+[2.372s] writing manifest file 'seano_sensors.egg-info/SOURCES.txt'
+[2.376s] running build_ext
+[2.377s] Creating /home/raihan/seano_ws/src/install/seano_sensors/lib/python3.10/site-packages/seano-sensors.egg-link (link to .)
+[2.379s] Installing adcp_reader script to /home/raihan/seano_ws/src/install/seano_sensors/lib/seano_sensors
+[2.379s] Installing ctd_reader script to /home/raihan/seano_ws/src/install/seano_sensors/lib/seano_sensors
+[2.380s] Installing gps_reader script to /home/raihan/seano_ws/src/install/seano_sensors/lib/seano_sensors
+[2.381s] Installing imu_reader script to /home/raihan/seano_ws/src/install/seano_sensors/lib/seano_sensors
+[2.382s] 
+[2.382s] Installed /home/raihan/seano_ws/src/build/seano_sensors
+[2.382s] running symlink_data
+[2.382s] creating /home/raihan/seano_ws/src/install/seano_sensors/share/ament_index
+[2.382s] creating /home/raihan/seano_ws/src/install/seano_sensors/share/ament_index/resource_index
+[2.383s] creating /home/raihan/seano_ws/src/install/seano_sensors/share/ament_index/resource_index/packages
+[2.383s] symbolically linking /home/raihan/seano_ws/src/build/seano_sensors/resource/seano_sensors -> /home/raihan/seano_ws/src/install/seano_sensors/share/ament_index/resource_index/packages
+[2.383s] symbolically linking /home/raihan/seano_ws/src/build/seano_sensors/package.xml -> /home/raihan/seano_ws/src/install/seano_sensors/share/seano_sensors
+[2.453s] Invoked command in '/home/raihan/seano_ws/src/build/seano_sensors' returned '0': PYTHONPATH=/home/raihan/seano_ws/src/build/seano_sensors/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/raihan/seano_ws/src/install/seano_sensors/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/raihan/seano_ws/src/build/seano_sensors/build --no-deps symlink_data

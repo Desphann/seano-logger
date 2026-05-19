@@ -1,0 +1,6 @@
+source;share/seano_logger/hook/pythonpath.ps1
+source;share/seano_logger/hook/pythonpath.dsv
+source;share/seano_logger/hook/pythonpath.sh
+source;share/seano_logger/hook/ament_prefix_path.ps1
+source;share/seano_logger/hook/ament_prefix_path.dsv
+source;share/seano_logger/hook/ament_prefix_path.sh

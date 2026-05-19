@@ -1,0 +1,186 @@
+[0.292s] DEBUG:colcon:Command line arguments: ['/usr/bin/colcon', 'build']
+[0.292s] DEBUG:colcon:Parsed command line arguments: Namespace(log_base=None, log_level=None, verb_name='build', build_base='build', install_base='install', merge_install=False, symlink_install=False, test_result_base=None, continue_on_error=False, executor='parallel', parallel_workers=6, event_handlers=None, ignore_user_meta=False, metas=['./colcon.meta'], base_paths=['.'], packages_ignore=None, packages_ignore_regex=None, paths=None, packages_up_to=None, packages_up_to_regex=None, packages_above=None, packages_above_and_dependencies=None, packages_above_depth=None, packages_select_by_dep=None, packages_skip_by_dep=None, packages_skip_up_to=None, packages_select_build_failed=False, packages_skip_build_finished=False, packages_select_test_failures=False, packages_skip_test_passed=False, packages_select=None, packages_skip=None, packages_select_regex=None, packages_skip_regex=None, packages_start=None, packages_end=None, allow_overriding=[], cmake_args=None, cmake_target=None, cmake_target_skip_unavailable=False, cmake_clean_cache=False, cmake_clean_first=False, cmake_force_configure=False, ament_cmake_args=None, catkin_cmake_args=None, catkin_skip_building_tests=False, verb_parser=<colcon_defaults.argument_parser.defaults.DefaultArgumentsDecorator object at 0xffffaef01930>, verb_extension=<colcon_core.verb.build.BuildVerb object at 0xffffaf0bf490>, main=<bound method BuildVerb.main of <colcon_core.verb.build.BuildVerb object at 0xffffaf0bf490>>)
+[0.407s] Level 1:colcon.colcon_core.package_discovery:discover_packages(colcon_meta) check parameters
+[0.407s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) check parameters
+[0.408s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) check parameters
+[0.408s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) check parameters
+[0.408s] Level 1:colcon.colcon_core.package_discovery:discover_packages(colcon_meta) discover
+[0.408s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) discover
+[0.408s] INFO:colcon.colcon_core.package_discovery:Crawling recursively for packages in '/home/seano/resource_git/seano-logger'
+[0.409s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['ignore', 'ignore_ament_install']
+[0.409s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'ignore'
+[0.409s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'ignore_ament_install'
+[0.409s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['colcon_pkg']
+[0.409s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'colcon_pkg'
+[0.410s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['colcon_meta']
+[0.410s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'colcon_meta'
+[0.410s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['ros']
+[0.410s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'ros'
+[0.450s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['cmake', 'python']
+[0.450s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'cmake'
+[0.451s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'python'
+[0.451s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['python_setup_py']
+[0.451s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'python_setup_py'
+[0.451s] Level 1:colcon.colcon_core.package_identification:_identify(build) by extensions ['ignore', 'ignore_ament_install']
+[0.452s] Level 1:colcon.colcon_core.package_identification:_identify(build) by extension 'ignore'
+[0.452s] Level 1:colcon.colcon_core.package_identification:_identify(build) ignored
+[0.452s] Level 1:colcon.colcon_core.package_identification:_identify(install) by extensions ['ignore', 'ignore_ament_install']
+[0.452s] Level 1:colcon.colcon_core.package_identification:_identify(install) by extension 'ignore'
+[0.453s] Level 1:colcon.colcon_core.package_identification:_identify(install) ignored
+[0.453s] Level 1:colcon.colcon_core.package_identification:_identify(log) by extensions ['ignore', 'ignore_ament_install']
+[0.453s] Level 1:colcon.colcon_core.package_identification:_identify(log) by extension 'ignore'
+[0.453s] Level 1:colcon.colcon_core.package_identification:_identify(log) ignored
+[0.454s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['ignore', 'ignore_ament_install']
+[0.454s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'ignore'
+[0.454s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'ignore_ament_install'
+[0.454s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['colcon_pkg']
+[0.454s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'colcon_pkg'
+[0.454s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['colcon_meta']
+[0.454s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'colcon_meta'
+[0.454s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['ros']
+[0.455s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'ros'
+[0.455s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['cmake', 'python']
+[0.455s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'cmake'
+[0.455s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'python'
+[0.455s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['python_setup_py']
+[0.455s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'python_setup_py'
+[0.455s] Level 1:colcon.colcon_core.package_identification:_identify(src/build) by extensions ['ignore', 'ignore_ament_install']
+[0.456s] Level 1:colcon.colcon_core.package_identification:_identify(src/build) by extension 'ignore'
+[0.456s] Level 1:colcon.colcon_core.package_identification:_identify(src/build) ignored
+[0.456s] Level 1:colcon.colcon_core.package_identification:_identify(src/install) by extensions ['ignore', 'ignore_ament_install']
+[0.456s] Level 1:colcon.colcon_core.package_identification:_identify(src/install) by extension 'ignore'
+[0.456s] Level 1:colcon.colcon_core.package_identification:_identify(src/install) ignored
+[0.457s] Level 1:colcon.colcon_core.package_identification:_identify(src/log) by extensions ['ignore', 'ignore_ament_install']
+[0.457s] Level 1:colcon.colcon_core.package_identification:_identify(src/log) by extension 'ignore'
+[0.457s] Level 1:colcon.colcon_core.package_identification:_identify(src/log) ignored
+[0.457s] Level 1:colcon.colcon_core.package_identification:_identify(src/seano_logger) by extensions ['ignore', 'ignore_ament_install']
+[0.457s] Level 1:colcon.colcon_core.package_identification:_identify(src/seano_logger) by extension 'ignore'
+[0.458s] Level 1:colcon.colcon_core.package_identification:_identify(src/seano_logger) by extension 'ignore_ament_install'
+[0.458s] Level 1:colcon.colcon_core.package_identification:_identify(src/seano_logger) by extensions ['colcon_pkg']
+[0.458s] Level 1:colcon.colcon_core.package_identification:_identify(src/seano_logger) by extension 'colcon_pkg'
+[0.458s] Level 1:colcon.colcon_core.package_identification:_identify(src/seano_logger) by extensions ['colcon_meta']
+[0.458s] Level 1:colcon.colcon_core.package_identification:_identify(src/seano_logger) by extension 'colcon_meta'
+[0.458s] Level 1:colcon.colcon_core.package_identification:_identify(src/seano_logger) by extensions ['ros']
+[0.458s] Level 1:colcon.colcon_core.package_identification:_identify(src/seano_logger) by extension 'ros'
+[0.465s] DEBUG:colcon.colcon_core.package_identification:Package 'src/seano_logger' with type 'ros.ament_python' and name 'seano_logger'
+[0.466s] Level 1:colcon.colcon_core.package_identification:_identify(src/seano_sensors) by extensions ['ignore', 'ignore_ament_install']
+[0.466s] Level 1:colcon.colcon_core.package_identification:_identify(src/seano_sensors) by extension 'ignore'
+[0.466s] Level 1:colcon.colcon_core.package_identification:_identify(src/seano_sensors) by extension 'ignore_ament_install'
+[0.466s] Level 1:colcon.colcon_core.package_identification:_identify(src/seano_sensors) by extensions ['colcon_pkg']
+[0.466s] Level 1:colcon.colcon_core.package_identification:_identify(src/seano_sensors) by extension 'colcon_pkg'
+[0.467s] Level 1:colcon.colcon_core.package_identification:_identify(src/seano_sensors) by extensions ['colcon_meta']
+[0.467s] Level 1:colcon.colcon_core.package_identification:_identify(src/seano_sensors) by extension 'colcon_meta'
+[0.467s] Level 1:colcon.colcon_core.package_identification:_identify(src/seano_sensors) by extensions ['ros']
+[0.467s] Level 1:colcon.colcon_core.package_identification:_identify(src/seano_sensors) by extension 'ros'
+[0.468s] DEBUG:colcon.colcon_core.package_identification:Package 'src/seano_sensors' with type 'ros.ament_python' and name 'seano_sensors'
+[0.468s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) using defaults
+[0.469s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) discover
+[0.469s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) using defaults
+[0.469s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) discover
+[0.469s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) using defaults
+[0.525s] Level 1:colcon.colcon_core.package_discovery:discover_packages(prefix_path) check parameters
+[0.525s] Level 1:colcon.colcon_core.package_discovery:discover_packages(prefix_path) discover
+[0.530s] DEBUG:colcon.colcon_installed_package_information.package_discovery:Found 2 installed packages in /home/seano/resource_git/seano-logger/install
+[0.533s] DEBUG:colcon.colcon_installed_package_information.package_discovery:Found 283 installed packages in /opt/ros/humble
+[0.536s] Level 1:colcon.colcon_core.package_discovery:discover_packages(prefix_path) using defaults
+[0.631s] Level 5:colcon.colcon_core.verb:set package 'seano_logger' build argument 'cmake_args' from command line to 'None'
+[0.631s] Level 5:colcon.colcon_core.verb:set package 'seano_logger' build argument 'cmake_target' from command line to 'None'
+[0.632s] Level 5:colcon.colcon_core.verb:set package 'seano_logger' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[0.632s] Level 5:colcon.colcon_core.verb:set package 'seano_logger' build argument 'cmake_clean_cache' from command line to 'False'
+[0.632s] Level 5:colcon.colcon_core.verb:set package 'seano_logger' build argument 'cmake_clean_first' from command line to 'False'
+[0.632s] Level 5:colcon.colcon_core.verb:set package 'seano_logger' build argument 'cmake_force_configure' from command line to 'False'
+[0.632s] Level 5:colcon.colcon_core.verb:set package 'seano_logger' build argument 'ament_cmake_args' from command line to 'None'
+[0.632s] Level 5:colcon.colcon_core.verb:set package 'seano_logger' build argument 'catkin_cmake_args' from command line to 'None'
+[0.632s] Level 5:colcon.colcon_core.verb:set package 'seano_logger' build argument 'catkin_skip_building_tests' from command line to 'False'
+[0.632s] DEBUG:colcon.colcon_core.verb:Building package 'seano_logger' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/seano/resource_git/seano-logger/build/seano_logger', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/seano/resource_git/seano-logger/install/seano_logger', 'merge_install': False, 'path': '/home/seano/resource_git/seano-logger/src/seano_logger', 'symlink_install': False, 'test_result_base': None}
+[0.633s] Level 5:colcon.colcon_core.verb:set package 'seano_sensors' build argument 'cmake_args' from command line to 'None'
+[0.633s] Level 5:colcon.colcon_core.verb:set package 'seano_sensors' build argument 'cmake_target' from command line to 'None'
+[0.633s] Level 5:colcon.colcon_core.verb:set package 'seano_sensors' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[0.633s] Level 5:colcon.colcon_core.verb:set package 'seano_sensors' build argument 'cmake_clean_cache' from command line to 'False'
+[0.633s] Level 5:colcon.colcon_core.verb:set package 'seano_sensors' build argument 'cmake_clean_first' from command line to 'False'
+[0.634s] Level 5:colcon.colcon_core.verb:set package 'seano_sensors' build argument 'cmake_force_configure' from command line to 'False'
+[0.634s] Level 5:colcon.colcon_core.verb:set package 'seano_sensors' build argument 'ament_cmake_args' from command line to 'None'
+[0.634s] Level 5:colcon.colcon_core.verb:set package 'seano_sensors' build argument 'catkin_cmake_args' from command line to 'None'
+[0.634s] Level 5:colcon.colcon_core.verb:set package 'seano_sensors' build argument 'catkin_skip_building_tests' from command line to 'False'
+[0.634s] DEBUG:colcon.colcon_core.verb:Building package 'seano_sensors' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/seano/resource_git/seano-logger/build/seano_sensors', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/seano/resource_git/seano-logger/install/seano_sensors', 'merge_install': False, 'path': '/home/seano/resource_git/seano-logger/src/seano_sensors', 'symlink_install': False, 'test_result_base': None}
+[0.634s] INFO:colcon.colcon_core.executor:Executing jobs using 'parallel' executor
+[0.639s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:run_until_complete
+[0.640s] INFO:colcon.colcon_ros.task.ament_python.build:Building ROS package in '/home/seano/resource_git/seano-logger/src/seano_logger' with build type 'ament_python'
+[0.640s] Level 1:colcon.colcon_core.shell:create_environment_hook('seano_logger', 'ament_prefix_path')
+[0.646s] INFO:colcon.colcon_core.plugin_system:Skipping extension 'colcon_core.shell.bat': Not used on non-Windows systems
+[0.646s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/seano/resource_git/seano-logger/install/seano_logger/share/seano_logger/hook/ament_prefix_path.ps1'
+[0.649s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/seano/resource_git/seano-logger/install/seano_logger/share/seano_logger/hook/ament_prefix_path.dsv'
+[0.650s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/seano/resource_git/seano-logger/install/seano_logger/share/seano_logger/hook/ament_prefix_path.sh'
+[0.652s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[0.652s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[0.661s] INFO:colcon.colcon_ros.task.ament_python.build:Building ROS package in '/home/seano/resource_git/seano-logger/src/seano_sensors' with build type 'ament_python'
+[0.662s] Level 1:colcon.colcon_core.shell:create_environment_hook('seano_sensors', 'ament_prefix_path')
+[0.662s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/seano/resource_git/seano-logger/install/seano_sensors/share/seano_sensors/hook/ament_prefix_path.ps1'
+[0.664s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/seano/resource_git/seano-logger/install/seano_sensors/share/seano_sensors/hook/ament_prefix_path.dsv'
+[0.665s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/seano/resource_git/seano-logger/install/seano_sensors/share/seano_sensors/hook/ament_prefix_path.sh'
+[0.667s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[0.667s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[1.269s] INFO:colcon.colcon_core.task.python.build:Building Python package in '/home/seano/resource_git/seano-logger/src/seano_logger'
+[1.270s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[1.271s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[1.895s] INFO:colcon.colcon_core.task.python.build:Building Python package in '/home/seano/resource_git/seano-logger/src/seano_sensors'
+[1.896s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[1.896s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[3.295s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/seano/resource_git/seano-logger/src/seano_sensors': PYTHONPATH=/home/seano/resource_git/seano-logger/build/seano_sensors/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/seano/resource_git/seano-logger/install/seano_sensors/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/seano_sensors build --build-base /home/seano/resource_git/seano-logger/build/seano_sensors/build install --record /home/seano/resource_git/seano-logger/build/seano_sensors/install.log --single-version-externally-managed install_data
+[3.306s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/seano/resource_git/seano-logger/src/seano_logger': PYTHONPATH=/home/seano/resource_git/seano-logger/build/seano_logger/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/seano/resource_git/seano-logger/install/seano_logger/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/seano_logger build --build-base /home/seano/resource_git/seano-logger/build/seano_logger/build install --record /home/seano/resource_git/seano-logger/build/seano_logger/install.log --single-version-externally-managed install_data
+[4.793s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/seano/resource_git/seano-logger/src/seano_logger' returned '0': PYTHONPATH=/home/seano/resource_git/seano-logger/build/seano_logger/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/seano/resource_git/seano-logger/install/seano_logger/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/seano_logger build --build-base /home/seano/resource_git/seano-logger/build/seano_logger/build install --record /home/seano/resource_git/seano-logger/build/seano_logger/install.log --single-version-externally-managed install_data
+[4.798s] Level 1:colcon.colcon_core.environment:checking '/home/seano/resource_git/seano-logger/install/seano_logger' for CMake module files
+[4.799s] Level 1:colcon.colcon_core.environment:checking '/home/seano/resource_git/seano-logger/install/seano_logger' for CMake config files
+[4.801s] Level 1:colcon.colcon_core.environment:checking '/home/seano/resource_git/seano-logger/install/seano_logger/lib'
+[4.802s] Level 1:colcon.colcon_core.environment:checking '/home/seano/resource_git/seano-logger/install/seano_logger/bin'
+[4.802s] Level 1:colcon.colcon_core.environment:checking '/home/seano/resource_git/seano-logger/install/seano_logger/lib/pkgconfig/seano_logger.pc'
+[4.803s] Level 1:colcon.colcon_core.environment:checking '/home/seano/resource_git/seano-logger/install/seano_logger/lib/python3.10/site-packages'
+[4.803s] Level 1:colcon.colcon_core.shell:create_environment_hook('seano_logger', 'pythonpath')
+[4.804s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/seano/resource_git/seano-logger/install/seano_logger/share/seano_logger/hook/pythonpath.ps1'
+[4.806s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/seano/resource_git/seano-logger/install/seano_logger/share/seano_logger/hook/pythonpath.dsv'
+[4.807s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/seano/resource_git/seano-logger/install/seano_logger/share/seano_logger/hook/pythonpath.sh'
+[4.809s] Level 1:colcon.colcon_core.environment:checking '/home/seano/resource_git/seano-logger/install/seano_logger/bin'
+[4.810s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(seano_logger)
+[4.811s] INFO:colcon.colcon_core.shell:Creating package script '/home/seano/resource_git/seano-logger/install/seano_logger/share/seano_logger/package.ps1'
+[4.814s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/seano/resource_git/seano-logger/install/seano_logger/share/seano_logger/package.dsv'
+[4.816s] INFO:colcon.colcon_core.shell:Creating package script '/home/seano/resource_git/seano-logger/install/seano_logger/share/seano_logger/package.sh'
+[4.819s] INFO:colcon.colcon_core.shell:Creating package script '/home/seano/resource_git/seano-logger/install/seano_logger/share/seano_logger/package.bash'
+[4.821s] INFO:colcon.colcon_core.shell:Creating package script '/home/seano/resource_git/seano-logger/install/seano_logger/share/seano_logger/package.zsh'
+[4.823s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/seano/resource_git/seano-logger/install/seano_logger/share/colcon-core/packages/seano_logger)
+[4.828s] Level 1:colcon.colcon_core.environment:checking '/home/seano/resource_git/seano-logger/install/seano_sensors' for CMake module files
+[4.831s] Level 1:colcon.colcon_core.environment:checking '/home/seano/resource_git/seano-logger/install/seano_sensors' for CMake config files
+[4.840s] Level 1:colcon.colcon_core.environment:checking '/home/seano/resource_git/seano-logger/install/seano_sensors/lib'
+[4.841s] Level 1:colcon.colcon_core.environment:checking '/home/seano/resource_git/seano-logger/install/seano_sensors/bin'
+[4.844s] Level 1:colcon.colcon_core.environment:checking '/home/seano/resource_git/seano-logger/install/seano_sensors/lib/pkgconfig/seano_sensors.pc'
+[4.845s] Level 1:colcon.colcon_core.environment:checking '/home/seano/resource_git/seano-logger/install/seano_sensors/lib/python3.10/site-packages'
+[4.845s] Level 1:colcon.colcon_core.shell:create_environment_hook('seano_sensors', 'pythonpath')
+[4.846s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/seano/resource_git/seano-logger/install/seano_sensors/share/seano_sensors/hook/pythonpath.ps1'
+[4.842s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/seano/resource_git/seano-logger/src/seano_sensors' returned '0': PYTHONPATH=/home/seano/resource_git/seano-logger/build/seano_sensors/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/seano/resource_git/seano-logger/install/seano_sensors/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/seano_sensors build --build-base /home/seano/resource_git/seano-logger/build/seano_sensors/build install --record /home/seano/resource_git/seano-logger/build/seano_sensors/install.log --single-version-externally-managed install_data
+[4.849s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/seano/resource_git/seano-logger/install/seano_sensors/share/seano_sensors/hook/pythonpath.dsv'
+[4.854s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/seano/resource_git/seano-logger/install/seano_sensors/share/seano_sensors/hook/pythonpath.sh'
+[4.857s] Level 1:colcon.colcon_core.environment:checking '/home/seano/resource_git/seano-logger/install/seano_sensors/bin'
+[4.858s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(seano_sensors)
+[4.860s] INFO:colcon.colcon_core.shell:Creating package script '/home/seano/resource_git/seano-logger/install/seano_sensors/share/seano_sensors/package.ps1'
+[4.862s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/seano/resource_git/seano-logger/install/seano_sensors/share/seano_sensors/package.dsv'
+[4.863s] INFO:colcon.colcon_core.shell:Creating package script '/home/seano/resource_git/seano-logger/install/seano_sensors/share/seano_sensors/package.sh'
+[4.864s] INFO:colcon.colcon_core.shell:Creating package script '/home/seano/resource_git/seano-logger/install/seano_sensors/share/seano_sensors/package.bash'
+[4.865s] INFO:colcon.colcon_core.shell:Creating package script '/home/seano/resource_git/seano-logger/install/seano_sensors/share/seano_sensors/package.zsh'
+[4.866s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/seano/resource_git/seano-logger/install/seano_sensors/share/colcon-core/packages/seano_sensors)
+[4.867s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:closing loop
+[4.869s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:loop closed
+[4.869s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:run_until_complete finished with '0'
+[4.869s] DEBUG:colcon.colcon_core.event_reactor:joining thread
+[4.885s] INFO:colcon.colcon_core.plugin_system:Skipping extension 'colcon_notification.desktop_notification.terminal_notifier': Not used on non-Darwin systems
+[4.885s] INFO:colcon.colcon_core.plugin_system:Skipping extension 'colcon_notification.desktop_notification.win32': Not used on non-Windows systems
+[4.885s] INFO:colcon.colcon_notification.desktop_notification:Sending desktop notification using 'notify2'
+[4.934s] DEBUG:colcon.colcon_core.event_reactor:joined thread
+[4.938s] INFO:colcon.colcon_core.shell:Creating prefix script '/home/seano/resource_git/seano-logger/install/local_setup.ps1'
+[4.946s] INFO:colcon.colcon_core.shell:Creating prefix util module '/home/seano/resource_git/seano-logger/install/_local_setup_util_ps1.py'
+[4.953s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/home/seano/resource_git/seano-logger/install/setup.ps1'
+[4.960s] INFO:colcon.colcon_core.shell:Creating prefix script '/home/seano/resource_git/seano-logger/install/local_setup.sh'
+[4.962s] INFO:colcon.colcon_core.shell:Creating prefix util module '/home/seano/resource_git/seano-logger/install/_local_setup_util_sh.py'
+[4.964s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/home/seano/resource_git/seano-logger/install/setup.sh'
+[4.968s] INFO:colcon.colcon_core.shell:Creating prefix script '/home/seano/resource_git/seano-logger/install/local_setup.bash'
+[4.970s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/home/seano/resource_git/seano-logger/install/setup.bash'
+[4.973s] INFO:colcon.colcon_core.shell:Creating prefix script '/home/seano/resource_git/seano-logger/install/local_setup.zsh'
+[4.974s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/home/seano/resource_git/seano-logger/install/setup.zsh'

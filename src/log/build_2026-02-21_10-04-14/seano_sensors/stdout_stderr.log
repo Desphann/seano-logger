@@ -1,0 +1,25 @@
+running develop
+running egg_info
+creating seano_sensors.egg-info
+writing seano_sensors.egg-info/PKG-INFO
+writing dependency_links to seano_sensors.egg-info/dependency_links.txt
+writing entry points to seano_sensors.egg-info/entry_points.txt
+writing requirements to seano_sensors.egg-info/requires.txt
+writing top-level names to seano_sensors.egg-info/top_level.txt
+writing manifest file 'seano_sensors.egg-info/SOURCES.txt'
+reading manifest file 'seano_sensors.egg-info/SOURCES.txt'
+writing manifest file 'seano_sensors.egg-info/SOURCES.txt'
+running build_ext
+Creating /home/raihan/seano_ws/src/install/seano_sensors/lib/python3.10/site-packages/seano-sensors.egg-link (link to .)
+Installing adcp_reader script to /home/raihan/seano_ws/src/install/seano_sensors/lib/seano_sensors
+Installing ctd_reader script to /home/raihan/seano_ws/src/install/seano_sensors/lib/seano_sensors
+Installing gps_reader script to /home/raihan/seano_ws/src/install/seano_sensors/lib/seano_sensors
+Installing imu_reader script to /home/raihan/seano_ws/src/install/seano_sensors/lib/seano_sensors
+
+Installed /home/raihan/seano_ws/src/build/seano_sensors
+running symlink_data
+creating /home/raihan/seano_ws/src/install/seano_sensors/share/ament_index
+creating /home/raihan/seano_ws/src/install/seano_sensors/share/ament_index/resource_index
+creating /home/raihan/seano_ws/src/install/seano_sensors/share/ament_index/resource_index/packages
+symbolically linking /home/raihan/seano_ws/src/build/seano_sensors/resource/seano_sensors -> /home/raihan/seano_ws/src/install/seano_sensors/share/ament_index/resource_index/packages
+symbolically linking /home/raihan/seano_ws/src/build/seano_sensors/package.xml -> /home/raihan/seano_ws/src/install/seano_sensors/share/seano_sensors

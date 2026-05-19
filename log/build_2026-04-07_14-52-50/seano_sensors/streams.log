@@ -1,0 +1,22 @@
+[2.565s] Invoking command in '/home/seano/resource_git/seano-logger/build/seano_sensors': PYTHONPATH=/home/seano/resource_git/seano-logger/build/seano_sensors/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/seano/resource_git/seano-logger/install/seano_sensors/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/seano/resource_git/seano-logger/build/seano_sensors/build --no-deps symlink_data
+[3.411s] running develop
+[3.953s] running egg_info
+[4.011s] writing seano_sensors.egg-info/PKG-INFO
+[4.011s] writing dependency_links to seano_sensors.egg-info/dependency_links.txt
+[4.011s] writing entry points to seano_sensors.egg-info/entry_points.txt
+[4.014s] writing requirements to seano_sensors.egg-info/requires.txt
+[4.014s] writing top-level names to seano_sensors.egg-info/top_level.txt
+[4.112s] reading manifest file 'seano_sensors.egg-info/SOURCES.txt'
+[4.117s] writing manifest file 'seano_sensors.egg-info/SOURCES.txt'
+[4.160s] running build_ext
+[4.160s] Creating /home/seano/resource_git/seano-logger/install/seano_sensors/lib/python3.10/site-packages/seano-sensors.egg-link (link to .)
+[4.163s] Installing adcp_reader script to /home/seano/resource_git/seano-logger/install/seano_sensors/lib/seano_sensors
+[4.163s] Installing battery_reader script to /home/seano/resource_git/seano-logger/install/seano_sensors/lib/seano_sensors
+[4.163s] Installing ctd_reader script to /home/seano/resource_git/seano-logger/install/seano_sensors/lib/seano_sensors
+[4.164s] Installing gps_reader script to /home/seano/resource_git/seano-logger/install/seano_sensors/lib/seano_sensors
+[4.165s] Installing imu_reader script to /home/seano/resource_git/seano-logger/install/seano_sensors/lib/seano_sensors
+[4.165s] Installing sbes_reader script to /home/seano/resource_git/seano-logger/install/seano_sensors/lib/seano_sensors
+[4.166s] 
+[4.166s] Installed /home/seano/resource_git/seano-logger/build/seano_sensors
+[4.166s] running symlink_data
+[4.363s] Invoked command in '/home/seano/resource_git/seano-logger/build/seano_sensors' returned '0': PYTHONPATH=/home/seano/resource_git/seano-logger/build/seano_sensors/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/seano/resource_git/seano-logger/install/seano_sensors/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/seano/resource_git/seano-logger/build/seano_sensors/build --no-deps symlink_data

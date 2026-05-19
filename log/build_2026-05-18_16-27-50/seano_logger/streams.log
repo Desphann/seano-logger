@@ -1,0 +1,20 @@
+[7.633s] Invoking command in '/home/seano/resource_git/seano-logger/build/seano_logger': PYTHONPATH=/home/seano/resource_git/seano-logger/build/seano_logger/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/seano/resource_git/seano-logger/install/seano_logger/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/seano/resource_git/seano-logger/build/seano_logger/build --no-deps symlink_data --force
+[9.361s] running develop
+[10.145s] running egg_info
+[10.190s] writing seano_logger.egg-info/PKG-INFO
+[10.190s] writing dependency_links to seano_logger.egg-info/dependency_links.txt
+[10.192s] writing entry points to seano_logger.egg-info/entry_points.txt
+[10.193s] writing requirements to seano_logger.egg-info/requires.txt
+[10.193s] writing top-level names to seano_logger.egg-info/top_level.txt
+[10.374s] reading manifest file 'seano_logger.egg-info/SOURCES.txt'
+[10.385s] writing manifest file 'seano_logger.egg-info/SOURCES.txt'
+[10.482s] running build_ext
+[10.482s] Creating /home/seano/resource_git/seano-logger/install/seano_logger/lib/python3.10/site-packages/seano-logger.egg-link (link to .)
+[10.491s] Installing logger_node script to /home/seano/resource_git/seano-logger/install/seano_logger/lib/seano_logger
+[10.495s] 
+[10.495s] Installed /home/seano/resource_git/seano-logger/build/seano_logger
+[10.495s] running symlink_data
+[10.511s] symbolically linking /home/seano/resource_git/seano-logger/build/seano_logger/resource/seano_logger -> /home/seano/resource_git/seano-logger/install/seano_logger/share/ament_index/resource_index/packages
+[10.511s] symbolically linking /home/seano/resource_git/seano-logger/build/seano_logger/package.xml -> /home/seano/resource_git/seano-logger/install/seano_logger/share/seano_logger
+[10.515s] symbolically linking /home/seano/resource_git/seano-logger/build/seano_logger/launch/seano_all.launch.py -> /home/seano/resource_git/seano-logger/install/seano_logger/share/seano_logger/launch
+[10.882s] Invoked command in '/home/seano/resource_git/seano-logger/build/seano_logger' returned '0': PYTHONPATH=/home/seano/resource_git/seano-logger/build/seano_logger/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/seano/resource_git/seano-logger/install/seano_logger/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/seano/resource_git/seano-logger/build/seano_logger/build --no-deps symlink_data --force

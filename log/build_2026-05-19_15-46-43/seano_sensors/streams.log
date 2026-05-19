@@ -1,0 +1,39 @@
+[2.672s] Invoking command in '/home/seano/resource_git/seano-logger/src/seano_sensors': PYTHONPATH=/home/seano/resource_git/seano-logger/build/seano_sensors/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/seano/resource_git/seano-logger/install/seano_sensors/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/seano_sensors build --build-base /home/seano/resource_git/seano-logger/build/seano_sensors/build install --record /home/seano/resource_git/seano-logger/build/seano_sensors/install.log --single-version-externally-managed install_data
+[3.386s] running egg_info
+[3.428s] writing ../../build/seano_sensors/seano_sensors.egg-info/PKG-INFO
+[3.430s] writing dependency_links to ../../build/seano_sensors/seano_sensors.egg-info/dependency_links.txt
+[3.431s] writing entry points to ../../build/seano_sensors/seano_sensors.egg-info/entry_points.txt
+[3.432s] writing requirements to ../../build/seano_sensors/seano_sensors.egg-info/requires.txt
+[3.433s] writing top-level names to ../../build/seano_sensors/seano_sensors.egg-info/top_level.txt
+[3.528s] reading manifest file '../../build/seano_sensors/seano_sensors.egg-info/SOURCES.txt'
+[3.529s] writing manifest file '../../build/seano_sensors/seano_sensors.egg-info/SOURCES.txt'
+[3.529s] running build
+[3.530s] running build_py
+[3.530s] copying seano_sensors/ctd_reader.py -> /home/seano/resource_git/seano-logger/build/seano_sensors/build/lib/seano_sensors
+[3.531s] copying seano_sensors/gps_reader.py -> /home/seano/resource_git/seano-logger/build/seano_sensors/build/lib/seano_sensors
+[3.531s] copying seano_sensors/battery_reader.py -> /home/seano/resource_git/seano-logger/build/seano_sensors/build/lib/seano_sensors
+[3.532s] copying seano_sensors/imu_reader.py -> /home/seano/resource_git/seano-logger/build/seano_sensors/build/lib/seano_sensors
+[3.533s] copying seano_sensors/video_logger_node.py -> /home/seano/resource_git/seano-logger/build/seano_sensors/build/lib/seano_sensors
+[3.534s] copying seano_sensors/sbes_reader.py -> /home/seano/resource_git/seano-logger/build/seano_sensors/build/lib/seano_sensors
+[3.535s] copying seano_sensors/__init__.py -> /home/seano/resource_git/seano-logger/build/seano_sensors/build/lib/seano_sensors
+[3.535s] copying seano_sensors/adcp_reader.py -> /home/seano/resource_git/seano-logger/build/seano_sensors/build/lib/seano_sensors
+[3.536s] running install
+[3.546s] running install_lib
+[3.590s] copying /home/seano/resource_git/seano-logger/build/seano_sensors/build/lib/seano_sensors/video_logger_node.py -> /home/seano/resource_git/seano-logger/install/seano_sensors/lib/python3.10/site-packages/seano_sensors
+[3.593s] byte-compiling /home/seano/resource_git/seano-logger/install/seano_sensors/lib/python3.10/site-packages/seano_sensors/video_logger_node.py to video_logger_node.cpython-310.pyc
+[3.607s] running install_data
+[3.608s] copying resource/seano_sensors -> /home/seano/resource_git/seano-logger/install/seano_sensors/share/ament_index/resource_index/packages
+[3.608s] copying package.xml -> /home/seano/resource_git/seano-logger/install/seano_sensors/share/seano_sensors
+[3.609s] running install_egg_info
+[3.657s] removing '/home/seano/resource_git/seano-logger/install/seano_sensors/lib/python3.10/site-packages/seano_sensors-0.0.0-py3.10.egg-info' (and everything under it)
+[3.657s] Copying ../../build/seano_sensors/seano_sensors.egg-info to /home/seano/resource_git/seano-logger/install/seano_sensors/lib/python3.10/site-packages/seano_sensors-0.0.0-py3.10.egg-info
+[3.660s] running install_scripts
+[3.998s] Installing adcp_reader script to /home/seano/resource_git/seano-logger/install/seano_sensors/lib/seano_sensors
+[3.999s] Installing battery_reader script to /home/seano/resource_git/seano-logger/install/seano_sensors/lib/seano_sensors
+[3.999s] Installing ctd_reader script to /home/seano/resource_git/seano-logger/install/seano_sensors/lib/seano_sensors
+[4.000s] Installing gps_reader script to /home/seano/resource_git/seano-logger/install/seano_sensors/lib/seano_sensors
+[4.000s] Installing imu_reader script to /home/seano/resource_git/seano-logger/install/seano_sensors/lib/seano_sensors
+[4.001s] Installing sbes_reader script to /home/seano/resource_git/seano-logger/install/seano_sensors/lib/seano_sensors
+[4.001s] Installing video_logger_node script to /home/seano/resource_git/seano-logger/install/seano_sensors/lib/seano_sensors
+[4.003s] writing list of installed files to '/home/seano/resource_git/seano-logger/build/seano_sensors/install.log'
+[4.140s] Invoked command in '/home/seano/resource_git/seano-logger/src/seano_sensors' returned '0': PYTHONPATH=/home/seano/resource_git/seano-logger/build/seano_sensors/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/seano/resource_git/seano-logger/install/seano_sensors/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/seano_sensors build --build-base /home/seano/resource_git/seano-logger/build/seano_sensors/build install --record /home/seano/resource_git/seano-logger/build/seano_sensors/install.log --single-version-externally-managed install_data

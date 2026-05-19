@@ -1,0 +1,16 @@
+[1.484s] Invoking command in '/home/raihan/seano_ws/src/build/seano_logger': PYTHONPATH=/home/raihan/seano_ws/src/build/seano_logger/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/raihan/seano_ws/src/install/seano_logger/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/raihan/seano_ws/src/build/seano_logger/build --no-deps symlink_data
+[1.926s] running develop
+[2.186s] running egg_info
+[2.187s] writing seano_logger.egg-info/PKG-INFO
+[2.187s] writing dependency_links to seano_logger.egg-info/dependency_links.txt
+[2.188s] writing entry points to seano_logger.egg-info/entry_points.txt
+[2.188s] writing requirements to seano_logger.egg-info/requires.txt
+[2.188s] writing top-level names to seano_logger.egg-info/top_level.txt
+[2.192s] reading manifest file 'seano_logger.egg-info/SOURCES.txt'
+[2.193s] writing manifest file 'seano_logger.egg-info/SOURCES.txt'
+[2.196s] running build_ext
+[2.196s] Creating /home/raihan/seano_ws/src/install/seano_logger/lib/python3.10/site-packages/seano-logger.egg-link (link to .)
+[2.198s] 
+[2.198s] Installed /home/raihan/seano_ws/src/build/seano_logger
+[2.199s] running symlink_data
+[2.259s] Invoked command in '/home/raihan/seano_ws/src/build/seano_logger' returned '0': PYTHONPATH=/home/raihan/seano_ws/src/build/seano_logger/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/raihan/seano_ws/src/install/seano_logger/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/raihan/seano_ws/src/build/seano_logger/build --no-deps symlink_data

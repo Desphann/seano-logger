@@ -1,0 +1,3 @@
+[console_scripts]
+logger_node = seano_logger.logger_node:main
+

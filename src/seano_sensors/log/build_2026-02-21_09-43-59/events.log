@@ -1,0 +1,64 @@
+[0.000000] (-) TimerEvent: {}
+[0.000250] (seano_sensors) JobQueued: {'identifier': 'seano_sensors', 'dependencies': OrderedDict()}
+[0.000311] (seano_sensors) JobStarted: {'identifier': 'seano_sensors'}
+[0.098942] (-) TimerEvent: {}
+[0.199286] (-) TimerEvent: {}
+[0.299646] (-) TimerEvent: {}
+[0.400001] (-) TimerEvent: {}
+[0.500422] (-) TimerEvent: {}
+[0.600773] (-) TimerEvent: {}
+[0.701117] (-) TimerEvent: {}
+[0.801478] (-) TimerEvent: {}
+[0.901853] (-) TimerEvent: {}
+[0.987175] (seano_sensors) Command: {'cmd': ['/usr/bin/python3', '-W', 'ignore:setup.py install is deprecated', '-W', 'ignore:easy_install command is deprecated', 'setup.py', 'egg_info', '--egg-base', 'build/seano_sensors', 'build', '--build-base', '/home/raihan/seano_ws/src/seano_sensors/build/seano_sensors/build', 'install', '--record', '/home/raihan/seano_ws/src/seano_sensors/build/seano_sensors/install.log', '--single-version-externally-managed', 'install_data'], 'cwd': '/home/raihan/seano_ws/src/seano_sensors', 'env': {'GJS_DEBUG_TOPICS': 'JS ERROR;JS LOG', 'LESSOPEN': '| /usr/bin/lesspipe %s', 'USER': 'raihan', 'LC_TIME': 'id_ID.UTF-8', 'XDG_SESSION_TYPE': 'wayland', 'SHLVL': '1', 'LD_LIBRARY_PATH': '/opt/ros/humble/opt/rviz_ogre_vendor/lib:/opt/ros/humble/lib/x86_64-linux-gnu:/opt/ros/humble/lib', 'HOME': '/home/raihan', 'CHROME_DESKTOP': 'code.desktop', 'OLDPWD': '/home/raihan/seano_ws/src', 'TERM_PROGRAM_VERSION': '1.109.0', 'DESKTOP_SESSION': 'ubuntu', 'GIO_LAUNCHED_DESKTOP_FILE': '/usr/share/applications/code.desktop', 'ROS_PYTHON_VERSION': '3', 'GNOME_SHELL_SESSION_MODE': 'ubuntu', 'GTK_MODULES': 'gail:atk-bridge', 'LC_MONETARY': 'id_ID.UTF-8', 'MANAGERPID': '935', 'SYSTEMD_EXEC_PID': '1178', 'VSCODE_PYTHON_AUTOACTIVATE_GUARD': '1', 'DBUS_SESSION_BUS_ADDRESS': 'unix:path=/run/user/1000/bus', 'COLORTERM': 'truecolor', 'GIO_LAUNCHED_DESKTOP_FILE_PID': '17378', 'IM_CONFIG_PHASE': '1', 'WAYLAND_DISPLAY': 'wayland-0', 'COLCON_PREFIX_PATH': '/home/raihan/seano_ws/src/install:/home/raihan/seano_ws/install', 'ROS_DISTRO': 'humble', 'LOGNAME': 'raihan', 'JOURNAL_STREAM': '8:10103', '_': '/usr/bin/colcon', 'ROS_VERSION': '2', 'XDG_SESSION_CLASS': 'user', 'USERNAME': 'raihan', 'TERM': 'xterm-256color', 'GNOME_DESKTOP_SESSION_ID': 'this-is-deprecated', 'FC_FONTATIONS': '1', 'ROS_LOCALHOST_ONLY': '0', 'PATH': '/opt/ros/humble/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin', 'SESSION_MANAGER': 'local/ASUS:@/tmp/.ICE-unix/1147,unix/ASUS:/tmp/.ICE-unix/1147', 'INVOCATION_ID': 'ee9e170ccdce41cb91791e86d80ba607', 'XDG_MENU_PREFIX': 'gnome-', 'LC_ADDRESS': 'id_ID.UTF-8', 'GNOME_SETUP_DISPLAY': ':1', 'XDG_RUNTIME_DIR': '/run/user/1000', 'GDK_BACKEND': 'wayland', 'DISPLAY': ':0', 'LANG': 'en_US.UTF-8', 'XDG_CURRENT_DESKTOP': 'ubuntu:GNOME', 'LC_TELEPHONE': 'id_ID.UTF-8', 'XMODIFIERS': '@im=ibus', 'XDG_SESSION_DESKTOP': 'ubuntu', 'XAUTHORITY': '/run/user/1000/.mutter-Xwaylandauth.H052K3', 'LS_COLORS': 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:', 'TERM_PROGRAM': 'vscode', 'SSH_AGENT_LAUNCHER': 'gnome-keyring', 'SSH_AUTH_SOCK': '/run/user/1000/keyring/ssh', 'AMENT_PREFIX_PATH': '/home/raihan/seano_ws/src/install/seano_sensors:/opt/ros/humble', 'SHELL': '/bin/bash', 'LC_NAME': 'id_ID.UTF-8', 'QT_ACCESSIBILITY': '1', 'GDMSESSION': 'ubuntu', 'LESSCLOSE': '/usr/bin/lesspipe %s %s', 'LC_MEASUREMENT': 'id_ID.UTF-8', 'GJS_DEBUG_OUTPUT': 'stderr', 'LC_IDENTIFICATION': 'id_ID.UTF-8', 'QT_IM_MODULE': 'ibus', 'PWD': '/home/raihan/seano_ws/src/seano_sensors/build/seano_sensors', 'LC_ALL': 'en_US.UTF-8', 'XDG_CONFIG_DIRS': '/etc/xdg/xdg-ubuntu:/etc/xdg', 'XDG_DATA_DIRS': '/usr/share/ubuntu:/usr/local/share/:/usr/share/:/var/lib/snapd/desktop', 'PYTHONPATH': '/home/raihan/seano_ws/src/seano_sensors/build/seano_sensors/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/raihan/seano_ws/src/seano_sensors/install/seano_sensors/lib/python3.10/site-packages:/home/raihan/seano_ws/src/install/seano_sensors/lib/python3.10/site-packages:/opt/ros/humble/lib/python3.10/site-packages:/opt/ros/humble/local/lib/python3.10/dist-packages', 'LC_NUMERIC': 'id_ID.UTF-8', 'LC_PAPER': 'id_ID.UTF-8', 'COLCON': '1'}, 'shell': False}
+[1.001932] (-) TimerEvent: {}
+[1.102277] (-) TimerEvent: {}
+[1.202629] (-) TimerEvent: {}
+[1.302979] (-) TimerEvent: {}
+[1.378405] (seano_sensors) StdoutLine: {'line': b'running egg_info\n'}
+[1.379348] (seano_sensors) StdoutLine: {'line': b'creating build/seano_sensors/seano_sensors.egg-info\n'}
+[1.379731] (seano_sensors) StdoutLine: {'line': b'writing build/seano_sensors/seano_sensors.egg-info/PKG-INFO\n'}
+[1.380167] (seano_sensors) StdoutLine: {'line': b'writing dependency_links to build/seano_sensors/seano_sensors.egg-info/dependency_links.txt\n'}
+[1.380356] (seano_sensors) StdoutLine: {'line': b'writing entry points to build/seano_sensors/seano_sensors.egg-info/entry_points.txt\n'}
+[1.380518] (seano_sensors) StdoutLine: {'line': b'writing requirements to build/seano_sensors/seano_sensors.egg-info/requires.txt\n'}
+[1.380761] (seano_sensors) StdoutLine: {'line': b'writing top-level names to build/seano_sensors/seano_sensors.egg-info/top_level.txt\n'}
+[1.381079] (seano_sensors) StdoutLine: {'line': b"writing manifest file 'build/seano_sensors/seano_sensors.egg-info/SOURCES.txt'\n"}
+[1.384240] (seano_sensors) StdoutLine: {'line': b"reading manifest file 'build/seano_sensors/seano_sensors.egg-info/SOURCES.txt'\n"}
+[1.386126] (seano_sensors) StdoutLine: {'line': b"writing manifest file 'build/seano_sensors/seano_sensors.egg-info/SOURCES.txt'\n"}
+[1.386414] (seano_sensors) StdoutLine: {'line': b'running build\n'}
+[1.386663] (seano_sensors) StdoutLine: {'line': b'running build_py\n'}
+[1.386924] (seano_sensors) StdoutLine: {'line': b'creating /home/raihan/seano_ws/src/seano_sensors/build/seano_sensors/build\n'}
+[1.387157] (seano_sensors) StdoutLine: {'line': b'creating /home/raihan/seano_ws/src/seano_sensors/build/seano_sensors/build/lib\n'}
+[1.387317] (seano_sensors) StdoutLine: {'line': b'creating /home/raihan/seano_ws/src/seano_sensors/build/seano_sensors/build/lib/seano_sensors\n'}
+[1.387539] (seano_sensors) StdoutLine: {'line': b'copying seano_sensors/gps_reader.py -> /home/raihan/seano_ws/src/seano_sensors/build/seano_sensors/build/lib/seano_sensors\n'}
+[1.387704] (seano_sensors) StdoutLine: {'line': b'copying seano_sensors/imu_reader.py -> /home/raihan/seano_ws/src/seano_sensors/build/seano_sensors/build/lib/seano_sensors\n'}
+[1.387865] (seano_sensors) StdoutLine: {'line': b'copying seano_sensors/adcp_reader.py -> /home/raihan/seano_ws/src/seano_sensors/build/seano_sensors/build/lib/seano_sensors\n'}
+[1.388055] (seano_sensors) StdoutLine: {'line': b'copying seano_sensors/__init__.py -> /home/raihan/seano_ws/src/seano_sensors/build/seano_sensors/build/lib/seano_sensors\n'}
+[1.388154] (seano_sensors) StdoutLine: {'line': b'copying seano_sensors/ctd_reader.py -> /home/raihan/seano_ws/src/seano_sensors/build/seano_sensors/build/lib/seano_sensors\n'}
+[1.388478] (seano_sensors) StdoutLine: {'line': b'running install\n'}
+[1.389128] (seano_sensors) StdoutLine: {'line': b'running install_lib\n'}
+[1.390442] (seano_sensors) StdoutLine: {'line': b'creating /home/raihan/seano_ws/src/seano_sensors/install/seano_sensors/lib/python3.10/site-packages/seano_sensors\n'}
+[1.390703] (seano_sensors) StdoutLine: {'line': b'copying /home/raihan/seano_ws/src/seano_sensors/build/seano_sensors/build/lib/seano_sensors/gps_reader.py -> /home/raihan/seano_ws/src/seano_sensors/install/seano_sensors/lib/python3.10/site-packages/seano_sensors\n'}
+[1.390946] (seano_sensors) StdoutLine: {'line': b'copying /home/raihan/seano_ws/src/seano_sensors/build/seano_sensors/build/lib/seano_sensors/imu_reader.py -> /home/raihan/seano_ws/src/seano_sensors/install/seano_sensors/lib/python3.10/site-packages/seano_sensors\n'}
+[1.391231] (seano_sensors) StdoutLine: {'line': b'copying /home/raihan/seano_ws/src/seano_sensors/build/seano_sensors/build/lib/seano_sensors/adcp_reader.py -> /home/raihan/seano_ws/src/seano_sensors/install/seano_sensors/lib/python3.10/site-packages/seano_sensors\n'}
+[1.391473] (seano_sensors) StdoutLine: {'line': b'copying /home/raihan/seano_ws/src/seano_sensors/build/seano_sensors/build/lib/seano_sensors/__init__.py -> /home/raihan/seano_ws/src/seano_sensors/install/seano_sensors/lib/python3.10/site-packages/seano_sensors\n'}
+[1.391718] (seano_sensors) StdoutLine: {'line': b'copying /home/raihan/seano_ws/src/seano_sensors/build/seano_sensors/build/lib/seano_sensors/ctd_reader.py -> /home/raihan/seano_ws/src/seano_sensors/install/seano_sensors/lib/python3.10/site-packages/seano_sensors\n'}
+[1.392560] (seano_sensors) StdoutLine: {'line': b'byte-compiling /home/raihan/seano_ws/src/seano_sensors/install/seano_sensors/lib/python3.10/site-packages/seano_sensors/gps_reader.py to gps_reader.cpython-310.pyc\n'}
+[1.393362] (seano_sensors) StdoutLine: {'line': b'byte-compiling /home/raihan/seano_ws/src/seano_sensors/install/seano_sensors/lib/python3.10/site-packages/seano_sensors/imu_reader.py to imu_reader.cpython-310.pyc\n'}
+[1.393641] (seano_sensors) StdoutLine: {'line': b'byte-compiling /home/raihan/seano_ws/src/seano_sensors/install/seano_sensors/lib/python3.10/site-packages/seano_sensors/adcp_reader.py to adcp_reader.cpython-310.pyc\n'}
+[1.393876] (seano_sensors) StdoutLine: {'line': b'byte-compiling /home/raihan/seano_ws/src/seano_sensors/install/seano_sensors/lib/python3.10/site-packages/seano_sensors/__init__.py to __init__.cpython-310.pyc\n'}
+[1.394119] (seano_sensors) StdoutLine: {'line': b'byte-compiling /home/raihan/seano_ws/src/seano_sensors/install/seano_sensors/lib/python3.10/site-packages/seano_sensors/ctd_reader.py to ctd_reader.cpython-310.pyc\n'}
+[1.394370] (seano_sensors) StdoutLine: {'line': b'running install_data\n'}
+[1.394638] (seano_sensors) StdoutLine: {'line': b'creating /home/raihan/seano_ws/src/seano_sensors/install/seano_sensors/share/ament_index\n'}
+[1.394858] (seano_sensors) StdoutLine: {'line': b'creating /home/raihan/seano_ws/src/seano_sensors/install/seano_sensors/share/ament_index/resource_index\n'}
+[1.395112] (seano_sensors) StdoutLine: {'line': b'creating /home/raihan/seano_ws/src/seano_sensors/install/seano_sensors/share/ament_index/resource_index/packages\n'}
+[1.395274] (seano_sensors) StdoutLine: {'line': b'copying resource/seano_sensors -> /home/raihan/seano_ws/src/seano_sensors/install/seano_sensors/share/ament_index/resource_index/packages\n'}
+[1.395490] (seano_sensors) StdoutLine: {'line': b'copying package.xml -> /home/raihan/seano_ws/src/seano_sensors/install/seano_sensors/share/seano_sensors\n'}
+[1.395638] (seano_sensors) StdoutLine: {'line': b'running install_egg_info\n'}
+[1.398594] (seano_sensors) StdoutLine: {'line': b'Copying build/seano_sensors/seano_sensors.egg-info to /home/raihan/seano_ws/src/seano_sensors/install/seano_sensors/lib/python3.10/site-packages/seano_sensors-0.0.0-py3.10.egg-info\n'}
+[1.399837] (seano_sensors) StdoutLine: {'line': b'running install_scripts\n'}
+[1.403073] (-) TimerEvent: {}
+[1.443267] (seano_sensors) StdoutLine: {'line': b"writing list of installed files to '/home/raihan/seano_ws/src/seano_sensors/build/seano_sensors/install.log'\n"}
+[1.483726] (seano_sensors) CommandEnded: {'returncode': 0}
+[1.498661] (seano_sensors) JobEnded: {'identifier': 'seano_sensors', 'rc': 0}
+[1.499566] (-) EventReactorShutdown: {}

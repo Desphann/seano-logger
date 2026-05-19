@@ -1,0 +1,23 @@
+[2.071s] Invoking command in '/home/raihan/seano_ws/src/build/seano_logger': PYTHONPATH=/home/raihan/seano_ws/src/build/seano_logger/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/raihan/seano_ws/src/install/seano_logger/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/raihan/seano_ws/src/build/seano_logger/build --no-deps symlink_data
+[2.503s] running develop
+[2.765s] running egg_info
+[2.765s] creating seano_logger.egg-info
+[2.766s] writing seano_logger.egg-info/PKG-INFO
+[2.766s] writing dependency_links to seano_logger.egg-info/dependency_links.txt
+[2.766s] writing entry points to seano_logger.egg-info/entry_points.txt
+[2.766s] writing requirements to seano_logger.egg-info/requires.txt
+[2.767s] writing top-level names to seano_logger.egg-info/top_level.txt
+[2.767s] writing manifest file 'seano_logger.egg-info/SOURCES.txt'
+[2.770s] reading manifest file 'seano_logger.egg-info/SOURCES.txt'
+[2.772s] writing manifest file 'seano_logger.egg-info/SOURCES.txt'
+[2.775s] running build_ext
+[2.775s] Creating /home/raihan/seano_ws/src/install/seano_logger/lib/python3.10/site-packages/seano-logger.egg-link (link to .)
+[2.777s] 
+[2.777s] Installed /home/raihan/seano_ws/src/build/seano_logger
+[2.777s] running symlink_data
+[2.778s] creating /home/raihan/seano_ws/src/install/seano_logger/share/ament_index
+[2.778s] creating /home/raihan/seano_ws/src/install/seano_logger/share/ament_index/resource_index
+[2.778s] creating /home/raihan/seano_ws/src/install/seano_logger/share/ament_index/resource_index/packages
+[2.778s] symbolically linking /home/raihan/seano_ws/src/build/seano_logger/resource/seano_logger -> /home/raihan/seano_ws/src/install/seano_logger/share/ament_index/resource_index/packages
+[2.778s] symbolically linking /home/raihan/seano_ws/src/build/seano_logger/package.xml -> /home/raihan/seano_ws/src/install/seano_logger/share/seano_logger
+[2.828s] Invoked command in '/home/raihan/seano_ws/src/build/seano_logger' returned '0': PYTHONPATH=/home/raihan/seano_ws/src/build/seano_logger/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/raihan/seano_ws/src/install/seano_logger/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/raihan/seano_ws/src/build/seano_logger/build --no-deps symlink_data

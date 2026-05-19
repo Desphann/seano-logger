@@ -1,0 +1,27 @@
+running egg_info
+writing ../build/seano_sensors/seano_sensors.egg-info/PKG-INFO
+writing dependency_links to ../build/seano_sensors/seano_sensors.egg-info/dependency_links.txt
+writing entry points to ../build/seano_sensors/seano_sensors.egg-info/entry_points.txt
+writing requirements to ../build/seano_sensors/seano_sensors.egg-info/requires.txt
+writing top-level names to ../build/seano_sensors/seano_sensors.egg-info/top_level.txt
+reading manifest file '../build/seano_sensors/seano_sensors.egg-info/SOURCES.txt'
+writing manifest file '../build/seano_sensors/seano_sensors.egg-info/SOURCES.txt'
+running build
+running build_py
+copying seano_sensors/sbes_reader.py -> /home/raihan/seano_ws/src/build/seano_sensors/build/lib/seano_sensors
+running install
+running install_lib
+copying /home/raihan/seano_ws/src/build/seano_sensors/build/lib/seano_sensors/sbes_reader.py -> /home/raihan/seano_ws/src/install/seano_sensors/lib/python3.10/site-packages/seano_sensors
+byte-compiling /home/raihan/seano_ws/src/install/seano_sensors/lib/python3.10/site-packages/seano_sensors/sbes_reader.py to sbes_reader.cpython-310.pyc
+running install_data
+running install_egg_info
+removing '/home/raihan/seano_ws/src/install/seano_sensors/lib/python3.10/site-packages/seano_sensors-0.0.0-py3.10.egg-info' (and everything under it)
+Copying ../build/seano_sensors/seano_sensors.egg-info to /home/raihan/seano_ws/src/install/seano_sensors/lib/python3.10/site-packages/seano_sensors-0.0.0-py3.10.egg-info
+running install_scripts
+Installing adcp_reader script to /home/raihan/seano_ws/src/install/seano_sensors/lib/seano_sensors
+Installing battery_reader script to /home/raihan/seano_ws/src/install/seano_sensors/lib/seano_sensors
+Installing ctd_reader script to /home/raihan/seano_ws/src/install/seano_sensors/lib/seano_sensors
+Installing gps_reader script to /home/raihan/seano_ws/src/install/seano_sensors/lib/seano_sensors
+Installing imu_reader script to /home/raihan/seano_ws/src/install/seano_sensors/lib/seano_sensors
+Installing sbes_reader script to /home/raihan/seano_ws/src/install/seano_sensors/lib/seano_sensors
+writing list of installed files to '/home/raihan/seano_ws/src/build/seano_sensors/install.log'
