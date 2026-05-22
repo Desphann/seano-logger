@@ -17,6 +17,8 @@ sudo systemctl stop seano_logger
 sudo systemctl restart seano_logger
 systemctl status seano_logger
 
+sudo systemctl restart seano_logger
+journalctl -u seano_logger -f
 
 
 

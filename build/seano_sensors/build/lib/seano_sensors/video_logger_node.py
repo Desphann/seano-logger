@@ -7,6 +7,7 @@ import threading
 from datetime import datetime
 
 import cv2
+import numpy as np
 
 import rclpy
 from rclpy.node import Node
@@ -17,7 +18,7 @@ from rclpy.qos import (
     DurabilityPolicy,
 )
 
-from sensor_msgs.msg import CompressedImage
+from sensor_msgs.msg import Image, CompressedImage
 from mavros_msgs.msg import State
 
 
@@ -26,20 +27,59 @@ class SeanoVideoLogger(Node):
         super().__init__("video_logger_node")
 
         # ============================================================
-        # CAMERA CONFIG
+        # IMPORTANT CONCEPT
         # ============================================================
+        # USB CAMERA DIRECT ACCESS IS DISABLED.
+        #
+        # Program lama membuka kamera langsung:
+        #     cv2.VideoCapture("/dev/video0")
+        #
+        # Itu bikin konflik dengan collision avoidance jika program teman
+        # kamu juga membaca USB camera yang sama.
+        #
+        # Program ini hanya subscribe image dari ROS topic.
+        # Jadi kamera USB hanya dibaca oleh collision avoidance / camera node.
+        # Video logger hanya menerima frame dari topic lalu menulis MP4.
+        # ============================================================
+
+        # ============================================================
+        # IMAGE TOPIC CONFIG
+        # ============================================================
+        self.declare_parameter("image_topic", "/seano/camera/image_raw_reliable")
+
+        # Pilihan:
+        #   "raw"        -> sensor_msgs/msg/Image
+        #   "compressed" -> sensor_msgs/msg/CompressedImage
+        self.declare_parameter("image_type", "raw")
+
+        # Pilihan:
+        #   "reliable"
+        #   "best_effort"
+        self.declare_parameter("image_reliability", "reliable")
+
+        # Tetap diterima supaya launch lama tidak error.
+        # Tidak dipakai sebagai konsep record-per-frame.
+        self.declare_parameter("record_every_n_frames", 1)
+
+        # ============================================================
+        # USB CAMERA COMPATIBILITY PARAMETERS - NOT USED
+        # ============================================================
+        # Parameter ini tetap dideklarasikan supaya launch lama tidak error.
+        # Tetapi program ini TIDAK membuka /dev/video0.
         self.declare_parameter("camera_device", "/dev/video0")
         self.declare_parameter("camera_width", 640)
         self.declare_parameter("camera_height", 480)
-
-        # Kamera kamu support maksimum 30 FPS.
+        self.declare_parameter("camera_max_fps", 30.0)
         self.declare_parameter("camera_fps", 30.0)
         self.declare_parameter("use_mjpg", True)
 
-        # Debug preview default OFF supaya recording lebih ringan.
-        # Tidak ada HUD / overlay di program ini.
+        # ============================================================
+        # DEBUG PREVIEW CONFIG
+        # ============================================================
+        # Debug preview ini publish ulang frame yang diterima logger.
+        # Default OFF supaya tidak menambah beban.
         self.declare_parameter("publish_debug_compressed", False)
-        self.declare_parameter("debug_topic", "/seano/camera/debug/compressed")
+        self.declare_parameter("debug_topic", "/seano/video_logger/debug/compressed")
         self.declare_parameter("debug_fps", 2.0)
         self.declare_parameter("debug_jpeg_quality", 60)
 
@@ -75,11 +115,17 @@ class SeanoVideoLogger(Node):
 
         # 0.0 = satu file mission_video.mp4 per mission.
         self.declare_parameter("segment_seconds", 0.0)
+        self.declare_parameter("force_single_mission_video", True)
 
         # Jangan flush CSV setiap frame karena bisa bikin stutter.
         self.declare_parameter("index_flush_every_n_frames", 120)
 
+        # Kalau belum ada frame dari topic saat armed, isi black frame dulu.
         self.declare_parameter("black_frame_until_camera_ready", True)
+
+        # Fallback resolusi kalau frame topic belum masuk tapi black frame perlu dibuat.
+        self.declare_parameter("fallback_width", 640)
+        self.declare_parameter("fallback_height", 480)
 
         # ============================================================
         # MISSION GATE CONFIG
@@ -93,9 +139,21 @@ class SeanoVideoLogger(Node):
         # ============================================================
         # LOAD PARAMETERS
         # ============================================================
+        self.image_topic = str(self.get_parameter("image_topic").value)
+        self.image_type = str(self.get_parameter("image_type").value).lower().strip()
+        self.image_reliability = str(
+            self.get_parameter("image_reliability").value
+        ).lower().strip()
+
+        self.record_every_n_frames = int(
+            self.get_parameter("record_every_n_frames").value
+        )
+
+        # Compatibility only. Not used to open camera.
         self.camera_device = str(self.get_parameter("camera_device").value)
         self.camera_width = int(self.get_parameter("camera_width").value)
         self.camera_height = int(self.get_parameter("camera_height").value)
+        self.camera_max_fps = float(self.get_parameter("camera_max_fps").value)
         self.camera_fps = float(self.get_parameter("camera_fps").value)
         self.use_mjpg = bool(self.get_parameter("use_mjpg").value)
 
@@ -130,6 +188,7 @@ class SeanoVideoLogger(Node):
         self.create_own_mission_folder_if_missing = bool(
             self.get_parameter("create_own_mission_folder_if_missing").value
         )
+
         self.mission_folder_wait_sec = float(
             self.get_parameter("mission_folder_wait_sec").value
         )
@@ -137,9 +196,13 @@ class SeanoVideoLogger(Node):
             self.get_parameter("mission_folder_attach_timeout_sec").value
         )
 
-        self.output_fps = float(self.get_parameter("output_fps").value)
+        raw_output_fps = float(self.get_parameter("output_fps").value)
         self.codec = str(self.get_parameter("codec").value)
+
         self.segment_seconds = float(self.get_parameter("segment_seconds").value)
+        self.force_single_mission_video = bool(
+            self.get_parameter("force_single_mission_video").value
+        )
 
         self.index_flush_every_n_frames = max(
             1,
@@ -150,13 +213,32 @@ class SeanoVideoLogger(Node):
             self.get_parameter("black_frame_until_camera_ready").value
         )
 
+        self.fallback_width = int(self.get_parameter("fallback_width").value)
+        self.fallback_height = int(self.get_parameter("fallback_height").value)
+
         self.mission_gate_topic = str(self.get_parameter("mission_gate_topic").value)
         self.force_record_without_mavros = bool(
             self.get_parameter("force_record_without_mavros").value
         )
 
-        if self.camera_fps <= 0.0:
-            self.camera_fps = 30.0
+        # ============================================================
+        # PARAMETER SANITIZATION
+        # ============================================================
+        if self.image_type not in ["raw", "compressed"]:
+            self.get_logger().warning(
+                f"Invalid image_type={self.image_type}. Fallback to raw."
+            )
+            self.image_type = "raw"
+
+        if self.camera_max_fps <= 0.0:
+            self.camera_max_fps = 30.0
+
+        # Proteksi dari launch lama output_fps=4.0.
+        # Kalau kamu benar-benar mau 4 FPS, ubah threshold ini sendiri.
+        if raw_output_fps < 15.0 or raw_output_fps > self.camera_max_fps:
+            self.output_fps = min(30.0, self.camera_max_fps)
+        else:
+            self.output_fps = raw_output_fps
 
         if self.output_fps <= 0.0:
             self.output_fps = 30.0
@@ -167,17 +249,24 @@ class SeanoVideoLogger(Node):
         if len(self.codec) != 4:
             self.codec = "mp4v"
 
+        if self.force_single_mission_video:
+            self.effective_segment_seconds = 0.0
+        else:
+            self.effective_segment_seconds = self.segment_seconds
+
+        if self.fallback_width <= 0:
+            self.fallback_width = 640
+
+        if self.fallback_height <= 0:
+            self.fallback_height = 480
+
         # ============================================================
         # INTERNAL STATE
         # ============================================================
-        self.cap = None
-
-        self.capture_thread = None
-        self.capture_running = False
-
         self.frame_lock = threading.Lock()
         self.latest_frame = None
         self.latest_frame_time = 0.0
+        self.latest_frame_ros_time = 0.0
 
         self.writer_thread = None
         self.writer_stop_event = threading.Event()
@@ -204,18 +293,26 @@ class SeanoVideoLogger(Node):
         self.frame_count_written = 0
         self.frame_count_duplicated = 0
         self.frame_count_black = 0
+        self.frame_decode_error_count = 0
         self.writer_late_count = 0
 
         self.last_written_source_time = 0.0
 
         self.last_status_text = None
         self.last_status_print_time = 0.0
+        self.last_frame_status_print_time = 0.0
 
         # ============================================================
-        # OPEN CAMERA + START CAPTURE THREAD
+        # USB CAMERA DIRECT CAPTURE DISABLED
         # ============================================================
-        self.open_camera()
-        self.start_capture_thread()
+        # Program sengaja tidak menjalankan:
+        #
+        # self.open_camera()
+        # self.start_capture_thread()
+        #
+        # Karena kamera USB sekarang dibaca oleh collision avoidance /
+        # camera publisher. Video logger hanya subscribe topic.
+        # ============================================================
 
         # ============================================================
         # ROS INTERFACES
@@ -226,6 +323,21 @@ class SeanoVideoLogger(Node):
             self.mavros_state_callback,
             self.make_state_qos(),
         )
+
+        if self.image_type == "compressed":
+            self.image_sub = self.create_subscription(
+                CompressedImage,
+                self.image_topic,
+                self.compressed_image_callback,
+                self.make_image_qos(),
+            )
+        else:
+            self.image_sub = self.create_subscription(
+                Image,
+                self.image_topic,
+                self.raw_image_callback,
+                self.make_image_qos(),
+            )
 
         self.debug_pub = None
         if self.publish_debug_compressed:
@@ -243,6 +355,10 @@ class SeanoVideoLogger(Node):
         self.watchdog_timer = self.create_timer(10.0, self.watchdog_callback)
 
         self.set_status("VIDEO LOGGER STANDBY")
+        self.get_logger().info(
+            f"Video input mode=ROS_TOPIC | topic={self.image_topic} | type={self.image_type}"
+        )
+        self.get_logger().info("USB camera direct access disabled to avoid device conflict")
 
     # ================================================================
     # MINIMAL STATUS LOGGING
@@ -260,67 +376,143 @@ class SeanoVideoLogger(Node):
             self.last_status_print_time = now
 
     # ================================================================
-    # CAMERA
+    # QOS
     # ================================================================
-    def parse_camera_device(self):
-        device_str = str(self.camera_device).strip()
-
-        if device_str.isdigit():
-            return int(device_str)
-
-        return device_str
-
-    def open_camera(self):
-        device = self.parse_camera_device()
-
-        self.cap = cv2.VideoCapture(device, cv2.CAP_V4L2)
-
-        if not self.cap.isOpened():
-            self.get_logger().fatal(
-                f"CAMERA ERROR: failed opening camera device={device}"
-            )
-            raise RuntimeError(f"Failed opening camera device={device}")
-
-        try:
-            self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
-        except Exception:
-            pass
-
-        if self.use_mjpg:
-            self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"MJPG"))
-
-        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, float(self.camera_width))
-        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, float(self.camera_height))
-        self.cap.set(cv2.CAP_PROP_FPS, float(self.camera_fps))
-
-    def start_capture_thread(self):
-        self.capture_running = True
-
-        self.capture_thread = threading.Thread(
-            target=self.capture_loop,
-            name="seano_camera_capture",
-            daemon=True,
+    def make_state_qos(self):
+        return QoSProfile(
+            history=HistoryPolicy.KEEP_LAST,
+            depth=10,
+            reliability=ReliabilityPolicy.BEST_EFFORT,
+            durability=DurabilityPolicy.VOLATILE,
         )
-        self.capture_thread.start()
 
-    def capture_loop(self):
-        while self.capture_running:
-            if self.cap is None or not self.cap.isOpened():
-                time.sleep(0.1)
-                continue
+    def make_image_qos(self):
+        reliability = ReliabilityPolicy.RELIABLE
 
-            ret, frame = self.cap.read()
+        if self.image_reliability in ["best_effort", "besteffort", "best-effort"]:
+            reliability = ReliabilityPolicy.BEST_EFFORT
 
-            if not ret or frame is None:
-                time.sleep(0.005)
-                continue
+        return QoSProfile(
+            history=HistoryPolicy.KEEP_LAST,
+            depth=5,
+            reliability=reliability,
+            durability=DurabilityPolicy.VOLATILE,
+        )
 
-            now = time.monotonic()
+    def make_debug_qos(self):
+        return QoSProfile(
+            history=HistoryPolicy.KEEP_LAST,
+            depth=2,
+            reliability=ReliabilityPolicy.BEST_EFFORT,
+            durability=DurabilityPolicy.VOLATILE,
+        )
 
-            with self.frame_lock:
-                self.latest_frame = frame
-                self.latest_frame_time = now
-                self.frame_count_in += 1
+    # ================================================================
+    # IMAGE TOPIC CALLBACKS
+    # ================================================================
+    def raw_image_callback(self, msg):
+        try:
+            frame = self.raw_image_to_bgr(msg)
+            ros_time = self.ros_stamp_to_float(msg.header.stamp)
+            self.store_latest_frame(frame, ros_time)
+
+        except Exception as e:
+            self.frame_decode_error_count += 1
+            self.warn_frame_decode_error(f"raw image decode failed: {e}")
+
+    def compressed_image_callback(self, msg):
+        try:
+            data = np.frombuffer(msg.data, dtype=np.uint8)
+            frame = cv2.imdecode(data, cv2.IMREAD_COLOR)
+
+            if frame is None:
+                raise RuntimeError("cv2.imdecode returned None")
+
+            ros_time = self.ros_stamp_to_float(msg.header.stamp)
+            self.store_latest_frame(frame, ros_time)
+
+        except Exception as e:
+            self.frame_decode_error_count += 1
+            self.warn_frame_decode_error(f"compressed image decode failed: {e}")
+
+    def warn_frame_decode_error(self, text):
+        now = time.time()
+
+        if now - self.last_frame_status_print_time >= 10.0:
+            self.get_logger().warning(text)
+            self.last_frame_status_print_time = now
+
+    def store_latest_frame(self, frame, ros_time):
+        if frame is None:
+            return
+
+        if len(frame.shape) == 2:
+            frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
+
+        if len(frame.shape) != 3 or frame.shape[2] != 3:
+            return
+
+        now = time.monotonic()
+
+        if ros_time <= 0.0:
+            source_time = now
+        else:
+            source_time = ros_time
+
+        with self.frame_lock:
+            self.latest_frame = frame
+            self.latest_frame_time = source_time
+            self.latest_frame_ros_time = ros_time
+            self.frame_count_in += 1
+
+    def raw_image_to_bgr(self, msg):
+        encoding = str(msg.encoding).lower()
+        height = int(msg.height)
+        width = int(msg.width)
+        step = int(msg.step)
+
+        if height <= 0 or width <= 0:
+            raise RuntimeError("invalid image size")
+
+        data = np.frombuffer(msg.data, dtype=np.uint8)
+
+        if encoding in ["bgr8", "8uc3"]:
+            row_data = data.reshape((height, step))
+            image = row_data[:, : width * 3].reshape((height, width, 3))
+            return image.copy()
+
+        if encoding == "rgb8":
+            row_data = data.reshape((height, step))
+            image = row_data[:, : width * 3].reshape((height, width, 3))
+            return cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+
+        if encoding == "bgra8":
+            row_data = data.reshape((height, step))
+            image = row_data[:, : width * 4].reshape((height, width, 4))
+            return cv2.cvtColor(image, cv2.COLOR_BGRA2BGR)
+
+        if encoding == "rgba8":
+            row_data = data.reshape((height, step))
+            image = row_data[:, : width * 4].reshape((height, width, 4))
+            return cv2.cvtColor(image, cv2.COLOR_RGBA2BGR)
+
+        if encoding in ["mono8", "8uc1"]:
+            row_data = data.reshape((height, step))
+            image = row_data[:, :width].reshape((height, width))
+            return cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+
+        if encoding in ["yuyv", "yuyv422", "yuv422"]:
+            row_data = data.reshape((height, step))
+            image = row_data[:, : width * 2].reshape((height, width, 2))
+            return cv2.cvtColor(image, cv2.COLOR_YUV2BGR_YUY2)
+
+        raise RuntimeError(f"unsupported raw image encoding: {msg.encoding}")
+
+    def ros_stamp_to_float(self, stamp):
+        try:
+            return float(stamp.sec) + float(stamp.nanosec) * 1e-9
+        except Exception:
+            return 0.0
 
     def get_latest_frame_copy(self):
         with self.frame_lock:
@@ -330,7 +522,44 @@ class SeanoVideoLogger(Node):
             return self.latest_frame.copy(), self.latest_frame_time
 
     def make_black_frame(self):
-        return cv2.UMat(self.camera_height, self.camera_width, cv2.CV_8UC3).get()
+        width = self.fallback_width
+        height = self.fallback_height
+
+        if self.frame_width is not None and self.frame_height is not None:
+            width = self.frame_width
+            height = self.frame_height
+
+        return np.zeros((int(height), int(width), 3), dtype=np.uint8)
+
+    # ================================================================
+    # DEBUG COMPRESSED PREVIEW
+    # ================================================================
+    def debug_timer_callback(self):
+        if not self.publish_debug_compressed or self.debug_pub is None:
+            return
+
+        frame, _ = self.get_latest_frame_copy()
+
+        if frame is None:
+            return
+
+        encode_param = [
+            int(cv2.IMWRITE_JPEG_QUALITY),
+            self.debug_jpeg_quality,
+        ]
+
+        ok, encoded = cv2.imencode(".jpg", frame, encode_param)
+
+        if not ok:
+            return
+
+        msg = CompressedImage()
+        msg.header.stamp = self.get_clock().now().to_msg()
+        msg.header.frame_id = "seano_video_logger"
+        msg.format = "jpeg"
+        msg.data = encoded.tobytes()
+
+        self.debug_pub.publish(msg)
 
     # ================================================================
     # MISSION FOLDER ATTACHMENT
@@ -344,9 +573,7 @@ class SeanoVideoLogger(Node):
 
             time.sleep(0.2)
 
-        self.get_logger().error(
-            "VIDEO LOGGER ERROR: no existing mission folder found"
-        )
+        self.get_logger().error("VIDEO LOGGER ERROR: no existing mission folder found")
         return False
 
     def try_attach_output_folder_once(self):
@@ -485,9 +712,7 @@ class SeanoVideoLogger(Node):
             return False
 
         self.mission_id = mission_id
-        self.get_logger().warning(
-            "VIDEO LOGGER WARNING: created own mission folder"
-        )
+        self.get_logger().warning("VIDEO LOGGER WARNING: created own mission folder")
         return True
 
     def add_logging_target(self, base_path, target_name):
@@ -529,17 +754,24 @@ class SeanoVideoLogger(Node):
         with open(info_path, "w") as f:
             f.write(f"Video Logger Start Time: {datetime.now()}\n")
             f.write("Platform: SEANO USV\n")
-            f.write("Logger Type: Smooth Full-Duration Direct Camera Video Logger\n")
+            f.write("Logger Type: ROS Topic Video Logger\n")
+            f.write("USB Camera Direct Access: DISABLED\n")
             f.write(f"Target Name: {target['name']}\n")
             f.write(f"Mission Folder: {target['base_path']}\n")
             f.write(f"Video Dir: {target['video_dir']}\n")
-            f.write(f"Camera Device: {self.camera_device}\n")
-            f.write(f"Camera Width: {self.camera_width}\n")
-            f.write(f"Camera Height: {self.camera_height}\n")
-            f.write(f"Camera FPS Request: {self.camera_fps}\n")
+            f.write(f"Image Topic: {self.image_topic}\n")
+            f.write(f"Image Type: {self.image_type}\n")
+            f.write(f"Image Reliability: {self.image_reliability}\n")
+            f.write(f"Fallback Width: {self.fallback_width}\n")
+            f.write(f"Fallback Height: {self.fallback_height}\n")
             f.write(f"Output FPS: {self.output_fps}\n")
             f.write(f"Codec: {self.codec}\n")
-            f.write(f"Segment Seconds: {self.segment_seconds}\n")
+            f.write(f"Segment Seconds Requested: {self.segment_seconds}\n")
+            f.write(f"Segment Seconds Effective: {self.effective_segment_seconds}\n")
+            f.write(f"Compatibility camera_device ignored: {self.camera_device}\n")
+            f.write(f"Compatibility camera_fps ignored: {self.camera_fps}\n")
+            f.write(f"Compatibility use_mjpg ignored: {self.use_mjpg}\n")
+            f.write(f"Compatibility record_every_n_frames ignored: {self.record_every_n_frames}\n")
 
             if state_msg is not None:
                 f.write(f"Start MAVROS Connected: {state_msg.connected}\n")
@@ -549,55 +781,6 @@ class SeanoVideoLogger(Node):
                 f.write("Start MAVROS Connected: UNKNOWN\n")
                 f.write("Start MAVROS Armed: UNKNOWN\n")
                 f.write("Start MAVROS Mode: UNKNOWN\n")
-
-    # ================================================================
-    # DEBUG COMPRESSED PREVIEW
-    # ================================================================
-    def debug_timer_callback(self):
-        if not self.publish_debug_compressed or self.debug_pub is None:
-            return
-
-        frame, _ = self.get_latest_frame_copy()
-
-        if frame is None:
-            return
-
-        encode_param = [
-            int(cv2.IMWRITE_JPEG_QUALITY),
-            self.debug_jpeg_quality,
-        ]
-
-        ok, encoded = cv2.imencode(".jpg", frame, encode_param)
-
-        if not ok:
-            return
-
-        msg = CompressedImage()
-        msg.header.stamp = self.get_clock().now().to_msg()
-        msg.header.frame_id = "seano_camera"
-        msg.format = "jpeg"
-        msg.data = encoded.tobytes()
-
-        self.debug_pub.publish(msg)
-
-    # ================================================================
-    # QOS
-    # ================================================================
-    def make_state_qos(self):
-        return QoSProfile(
-            history=HistoryPolicy.KEEP_LAST,
-            depth=10,
-            reliability=ReliabilityPolicy.BEST_EFFORT,
-            durability=DurabilityPolicy.VOLATILE,
-        )
-
-    def make_debug_qos(self):
-        return QoSProfile(
-            history=HistoryPolicy.KEEP_LAST,
-            depth=2,
-            reliability=ReliabilityPolicy.BEST_EFFORT,
-            durability=DurabilityPolicy.VOLATILE,
-        )
 
     # ================================================================
     # MAVROS STATE / MISSION GATE
@@ -632,6 +815,12 @@ class SeanoVideoLogger(Node):
                 interval_sec=30.0,
             )
 
+        if self.frame_count_in <= 0:
+            self.warn_once_per_interval(
+                f"VIDEO LOGGER: waiting image topic {self.image_topic}",
+                interval_sec=30.0,
+            )
+
     # ================================================================
     # LOGGING SESSION
     # ================================================================
@@ -649,6 +838,7 @@ class SeanoVideoLogger(Node):
         self.frame_count_written = 0
         self.frame_count_duplicated = 0
         self.frame_count_black = 0
+        self.frame_decode_error_count = 0
         self.writer_late_count = 0
         self.last_written_source_time = 0.0
         self.frame_width = None
@@ -749,9 +939,9 @@ class SeanoVideoLogger(Node):
         now = time.time()
 
         if (
-            self.segment_seconds > 0.0
+            self.effective_segment_seconds > 0.0
             and self.segment_start_wall > 0.0
-            and now - self.segment_start_wall >= self.segment_seconds
+            and now - self.segment_start_wall >= self.effective_segment_seconds
         ):
             self.open_new_video(width, height)
 
@@ -813,7 +1003,7 @@ class SeanoVideoLogger(Node):
         self.segment_index += 1
         self.segment_start_wall = time.time()
 
-        if self.segment_seconds > 0.0:
+        if self.effective_segment_seconds > 0.0:
             final_filename = f"video_segment_{self.segment_index:03d}.mp4"
         else:
             final_filename = "mission_video.mp4"
@@ -919,6 +1109,7 @@ class SeanoVideoLogger(Node):
                     f.write(f"Total Written Frames: {self.frame_count_written}\n")
                     f.write(f"Duplicated Written Frames: {self.frame_count_duplicated}\n")
                     f.write(f"Black Written Frames: {self.frame_count_black}\n")
+                    f.write(f"Frame Decode Error Count: {self.frame_decode_error_count}\n")
                     f.write(f"Writer Late Count: {self.writer_late_count}\n")
                     f.write(f"End MAVROS Connected: {self.last_connected_state}\n")
                     f.write(f"End MAVROS Armed: {self.last_armed_state}\n")
@@ -965,19 +1156,10 @@ class SeanoVideoLogger(Node):
                 except Exception:
                     pass
 
-        self.capture_running = False
-
-        if self.capture_thread is not None:
-            try:
-                self.capture_thread.join(timeout=2.0)
-            except Exception:
-                pass
-
-        if self.cap is not None:
-            try:
-                self.cap.release()
-            except Exception:
-                pass
+        try:
+            self.destroy_subscription(self.image_sub)
+        except Exception:
+            pass
 
         try:
             os.sync()

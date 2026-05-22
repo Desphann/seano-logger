@@ -2,6 +2,7 @@
 /home/seano/resource_git/seano-logger/install/seano_sensors/lib/python3.10/site-packages/seano_sensors/gps_reader.py
 /home/seano/resource_git/seano-logger/install/seano_sensors/lib/python3.10/site-packages/seano_sensors/battery_reader.py
 /home/seano/resource_git/seano-logger/install/seano_sensors/lib/python3.10/site-packages/seano_sensors/imu_reader.py
+/home/seano/resource_git/seano-logger/install/seano_sensors/lib/python3.10/site-packages/seano_sensors/mission_state_reader_node.py
 /home/seano/resource_git/seano-logger/install/seano_sensors/lib/python3.10/site-packages/seano_sensors/video_logger_node.py
 /home/seano/resource_git/seano-logger/install/seano_sensors/lib/python3.10/site-packages/seano_sensors/sbes_reader.py
 /home/seano/resource_git/seano-logger/install/seano_sensors/lib/python3.10/site-packages/seano_sensors/__init__.py
@@ -10,6 +11,7 @@
 /home/seano/resource_git/seano-logger/install/seano_sensors/lib/python3.10/site-packages/seano_sensors/__pycache__/gps_reader.cpython-310.pyc
 /home/seano/resource_git/seano-logger/install/seano_sensors/lib/python3.10/site-packages/seano_sensors/__pycache__/battery_reader.cpython-310.pyc
 /home/seano/resource_git/seano-logger/install/seano_sensors/lib/python3.10/site-packages/seano_sensors/__pycache__/imu_reader.cpython-310.pyc
+/home/seano/resource_git/seano-logger/install/seano_sensors/lib/python3.10/site-packages/seano_sensors/__pycache__/mission_state_reader_node.cpython-310.pyc
 /home/seano/resource_git/seano-logger/install/seano_sensors/lib/python3.10/site-packages/seano_sensors/__pycache__/video_logger_node.cpython-310.pyc
 /home/seano/resource_git/seano-logger/install/seano_sensors/lib/python3.10/site-packages/seano_sensors/__pycache__/sbes_reader.cpython-310.pyc
 /home/seano/resource_git/seano-logger/install/seano_sensors/lib/python3.10/site-packages/seano_sensors/__pycache__/__init__.cpython-310.pyc
@@ -28,5 +30,6 @@
 /home/seano/resource_git/seano-logger/install/seano_sensors/lib/seano_sensors/ctd_reader
 /home/seano/resource_git/seano-logger/install/seano_sensors/lib/seano_sensors/gps_reader
 /home/seano/resource_git/seano-logger/install/seano_sensors/lib/seano_sensors/imu_reader
+/home/seano/resource_git/seano-logger/install/seano_sensors/lib/seano_sensors/mission_state_reader_node
 /home/seano/resource_git/seano-logger/install/seano_sensors/lib/seano_sensors/sbes_reader
 /home/seano/resource_git/seano-logger/install/seano_sensors/lib/seano_sensors/video_logger_node

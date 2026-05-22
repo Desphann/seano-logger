@@ -31,6 +31,7 @@ setup(
         'battery_reader = seano_sensors.battery_reader:main',
         'sbes_reader = seano_sensors.sbes_reader:main',
         'video_logger_node = seano_sensors.video_logger_node:main',
+        'mission_state_reader_node = seano_sensors.mission_state_reader_node:main',
         ],
     },
 )
