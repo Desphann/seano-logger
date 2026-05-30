@@ -1,0 +1,288 @@
+[0.000000] (-) TimerEvent: {}
+[0.000966] (seano_logger) JobQueued: {'identifier': 'seano_logger', 'dependencies': OrderedDict()}
+[0.001278] (seano_sensors) JobQueued: {'identifier': 'seano_sensors', 'dependencies': OrderedDict()}
+[0.001526] (seano_logger) JobStarted: {'identifier': 'seano_logger'}
+[0.090387] (-) TimerEvent: {}
+[0.144976] (seano_sensors) JobStarted: {'identifier': 'seano_sensors'}
+[0.205165] (-) TimerEvent: {}
+[0.306367] (-) TimerEvent: {}
+[0.407436] (-) TimerEvent: {}
+[0.508502] (-) TimerEvent: {}
+[0.609852] (-) TimerEvent: {}
+[0.713324] (-) TimerEvent: {}
+[0.814905] (-) TimerEvent: {}
+[0.916690] (-) TimerEvent: {}
+[1.018334] (-) TimerEvent: {}
+[1.119985] (-) TimerEvent: {}
+[1.221811] (-) TimerEvent: {}
+[1.323476] (-) TimerEvent: {}
+[1.427015] (-) TimerEvent: {}
+[1.528177] (-) TimerEvent: {}
+[1.638448] (-) TimerEvent: {}
+[1.740195] (-) TimerEvent: {}
+[1.853769] (-) TimerEvent: {}
+[1.955068] (-) TimerEvent: {}
+[2.059962] (-) TimerEvent: {}
+[2.161116] (-) TimerEvent: {}
+[2.262258] (-) TimerEvent: {}
+[2.370619] (-) TimerEvent: {}
+[2.472756] (-) TimerEvent: {}
+[2.577623] (-) TimerEvent: {}
+[2.681612] (-) TimerEvent: {}
+[2.782696] (-) TimerEvent: {}
+[2.883769] (-) TimerEvent: {}
+[2.984902] (-) TimerEvent: {}
+[3.089091] (-) TimerEvent: {}
+[3.194425] (-) TimerEvent: {}
+[3.303387] (-) TimerEvent: {}
+[3.406304] (-) TimerEvent: {}
+[3.513827] (-) TimerEvent: {}
+[3.615422] (-) TimerEvent: {}
+[3.717121] (-) TimerEvent: {}
+[3.819917] (-) TimerEvent: {}
+[3.928445] (-) TimerEvent: {}
+[4.030505] (-) TimerEvent: {}
+[4.135905] (-) TimerEvent: {}
+[4.243913] (-) TimerEvent: {}
+[4.347491] (-) TimerEvent: {}
+[4.449257] (-) TimerEvent: {}
+[4.562897] (-) TimerEvent: {}
+[4.666445] (-) TimerEvent: {}
+[4.776078] (-) TimerEvent: {}
+[4.878546] (-) TimerEvent: {}
+[4.979610] (-) TimerEvent: {}
+[5.080941] (-) TimerEvent: {}
+[5.182748] (-) TimerEvent: {}
+[5.284021] (-) TimerEvent: {}
+[5.385200] (-) TimerEvent: {}
+[5.486682] (-) TimerEvent: {}
+[5.591686] (-) TimerEvent: {}
+[5.692773] (-) TimerEvent: {}
+[5.793915] (-) TimerEvent: {}
+[5.902607] (-) TimerEvent: {}
+[6.005171] (-) TimerEvent: {}
+[6.121203] (-) TimerEvent: {}
+[6.223529] (-) TimerEvent: {}
+[6.325625] (-) TimerEvent: {}
+[6.429018] (-) TimerEvent: {}
+[6.530300] (-) TimerEvent: {}
+[6.631486] (-) TimerEvent: {}
+[6.739082] (-) TimerEvent: {}
+[6.844387] (-) TimerEvent: {}
+[6.946617] (-) TimerEvent: {}
+[7.054900] (-) TimerEvent: {}
+[7.161942] (-) TimerEvent: {}
+[7.263112] (-) TimerEvent: {}
+[7.365076] (-) TimerEvent: {}
+[7.466144] (-) TimerEvent: {}
+[7.571599] (-) TimerEvent: {}
+[7.679294] (-) TimerEvent: {}
+[7.788941] (-) TimerEvent: {}
+[7.891600] (-) TimerEvent: {}
+[7.997843] (-) TimerEvent: {}
+[8.100482] (-) TimerEvent: {}
+[8.204789] (-) TimerEvent: {}
+[8.314137] (-) TimerEvent: {}
+[8.415346] (-) TimerEvent: {}
+[8.518766] (-) TimerEvent: {}
+[8.620380] (-) TimerEvent: {}
+[8.722573] (-) TimerEvent: {}
+[8.824664] (-) TimerEvent: {}
+[8.929681] (-) TimerEvent: {}
+[9.032541] (-) TimerEvent: {}
+[9.133613] (-) TimerEvent: {}
+[9.234668] (-) TimerEvent: {}
+[9.335814] (-) TimerEvent: {}
+[9.438202] (-) TimerEvent: {}
+[9.539400] (-) TimerEvent: {}
+[9.640976] (-) TimerEvent: {}
+[9.742506] (-) TimerEvent: {}
+[9.844659] (-) TimerEvent: {}
+[9.946190] (-) TimerEvent: {}
+[10.047351] (-) TimerEvent: {}
+[10.148566] (-) TimerEvent: {}
+[10.250137] (-) TimerEvent: {}
+[10.351725] (-) TimerEvent: {}
+[10.453370] (-) TimerEvent: {}
+[10.554439] (-) TimerEvent: {}
+[10.656052] (-) TimerEvent: {}
+[10.757129] (-) TimerEvent: {}
+[10.858322] (-) TimerEvent: {}
+[10.960697] (-) TimerEvent: {}
+[11.063639] (-) TimerEvent: {}
+[11.164838] (-) TimerEvent: {}
+[11.267563] (-) TimerEvent: {}
+[11.371936] (-) TimerEvent: {}
+[11.473505] (-) TimerEvent: {}
+[11.585683] (-) TimerEvent: {}
+[11.688460] (-) TimerEvent: {}
+[11.794870] (-) TimerEvent: {}
+[11.900900] (-) TimerEvent: {}
+[12.001909] (-) TimerEvent: {}
+[12.103006] (-) TimerEvent: {}
+[12.204378] (-) TimerEvent: {}
+[12.314642] (-) TimerEvent: {}
+[12.421860] (-) TimerEvent: {}
+[12.523001] (-) TimerEvent: {}
+[12.625637] (-) TimerEvent: {}
+[12.727255] (-) TimerEvent: {}
+[12.828302] (-) TimerEvent: {}
+[12.932428] (-) TimerEvent: {}
+[13.033438] (-) TimerEvent: {}
+[13.137375] (-) TimerEvent: {}
+[13.238336] (-) TimerEvent: {}
+[13.340151] (-) TimerEvent: {}
+[13.441253] (-) TimerEvent: {}
+[13.542789] (-) TimerEvent: {}
+[13.646345] (-) TimerEvent: {}
+[13.753541] (-) TimerEvent: {}
+[13.854626] (-) TimerEvent: {}
+[13.958783] (-) TimerEvent: {}
+[14.069399] (-) TimerEvent: {}
+[14.170431] (-) TimerEvent: {}
+[14.274053] (-) TimerEvent: {}
+[14.389630] (-) TimerEvent: {}
+[14.491639] (-) TimerEvent: {}
+[14.593739] (-) TimerEvent: {}
+[14.696298] (-) TimerEvent: {}
+[14.797450] (-) TimerEvent: {}
+[14.898590] (-) TimerEvent: {}
+[14.999830] (-) TimerEvent: {}
+[15.101735] (-) TimerEvent: {}
+[15.202797] (-) TimerEvent: {}
+[15.303970] (-) TimerEvent: {}
+[15.405617] (-) TimerEvent: {}
+[15.508558] (-) TimerEvent: {}
+[15.609822] (-) TimerEvent: {}
+[15.711013] (-) TimerEvent: {}
+[15.812189] (-) TimerEvent: {}
+[15.913413] (-) TimerEvent: {}
+[16.009197] (seano_logger) Command: {'cmd': ['/usr/bin/python3', '-W', 'ignore:setup.py install is deprecated', '-W', 'ignore:easy_install command is deprecated', 'setup.py', 'egg_info', '--egg-base', '../../build/seano_logger', 'build', '--build-base', '/home/seano/resource_git/seano-logger/build/seano_logger/build', 'install', '--record', '/home/seano/resource_git/seano-logger/build/seano_logger/install.log', '--single-version-externally-managed', 'install_data'], 'cwd': '/home/seano/resource_git/seano-logger/src/seano_logger', 'env': {'PYTHON_BASIC_REPL': '1', 'LESSOPEN': '| /usr/bin/lesspipe %s', 'USER': 'seano', 'SSH_CLIENT': '100.82.72.97 54822 22', 'LC_TIME': 'id_ID.UTF-8', 'GIT_ASKPASS': '/home/seano/.vscode-server/cli/servers/Stable-bdd88df003631aaa0bcbe057cb0a940b80a476fa/server/extensions/git/dist/askpass.sh', 'SHLVL': '2', 'LD_LIBRARY_PATH': '/opt/ros/humble/opt/rviz_ogre_vendor/lib:/opt/ros/humble/lib/aarch64-linux-gnu:/opt/ros/humble/lib', 'BROWSER': '/home/seano/.vscode-server/cli/servers/Stable-bdd88df003631aaa0bcbe057cb0a940b80a476fa/server/bin/helpers/browser.sh', 'HOME': '/home/seano', 'OLDPWD': '/home/seano/resource_git', 'TERM_PROGRAM_VERSION': '1.109.0', 'VSCODE_IPC_HOOK_CLI': '/tmp/vscode-ipc-cc5f921c-8871-469e-91f3-dbb98ac2b332.sock', 'ROS_PYTHON_VERSION': '3', 'VSCODE_GIT_ASKPASS_MAIN': '/home/seano/.vscode-server/cli/servers/Stable-bdd88df003631aaa0bcbe057cb0a940b80a476fa/server/extensions/git/dist/askpass-main.js', 'LC_MONETARY': 'id_ID.UTF-8', 'VSCODE_GIT_ASKPASS_NODE': '/home/seano/.vscode-server/cli/servers/Stable-bdd88df003631aaa0bcbe057cb0a940b80a476fa/server/node', 'SSL_CERT_FILE': '/usr/lib/ssl/certs/ca-certificates.crt', 'PYDEVD_DISABLE_FILE_VALIDATION': '1', 'BUNDLED_DEBUGPY_PATH': '/home/seano/.vscode-server/extensions/ms-python.debugpy-2026.6.0-linux-arm64/bundled/libs/debugpy', 'VSCODE_PYTHON_AUTOACTIVATE_GUARD': '1', 'DBUS_SESSION_BUS_ADDRESS': 'unix:path=/run/user/1000/bus', 'COLORTERM': 'truecolor', 'COLCON_PREFIX_PATH': '/home/seano/resource_git/seano-logger/install:/home/seano/Seano_ws/install', 'ROS_DISTRO': 'humble', '_': '/usr/bin/colcon', 'ROS_VERSION': '2', 'TERM': 'xterm-256color', 'ROS_LOCALHOST_ONLY': '0', 'PATH': '/home/seano/.vscode-server/cli/servers/Stable-bdd88df003631aaa0bcbe057cb0a940b80a476fa/server/bin/remote-cli:/home/seano/.local/bin:/opt/ros/humble/bin:/home/seano/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/home/seano/.vscode-server/extensions/ms-python.debugpy-2026.6.0-linux-arm64/bundled/scripts/noConfigScripts:/home/seano/.vscode-server/data/User/globalStorage/github.copilot-chat/debugCommand', 'LC_ADDRESS': 'id_ID.UTF-8', 'SSL_CERT_DIR': '/usr/lib/ssl/certs', 'VSCODE_DEBUGPY_ADAPTER_ENDPOINTS': '/home/seano/.vscode-server/extensions/ms-python.debugpy-2026.6.0-linux-arm64/.noConfigDebugAdapterEndpoints/endpoint-8f848731c9f8eb04.txt', 'LANG': 'en_US.UTF-8', 'PYTHONSTARTUP': '/home/seano/.vscode-server/data/User/workspaceStorage/64309d53a2f2d9cf19191a20c7a34d0e/ms-python.python/pythonrc.py', 'LC_TELEPHONE': 'id_ID.UTF-8', 'LS_COLORS': 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:', 'VSCODE_GIT_IPC_HANDLE': '/tmp/vscode-git-e8ad7d84aa.sock', 'TERM_PROGRAM': 'vscode', 'ROS_DOMAIN_ID': '0', 'AMENT_PREFIX_PATH': '/home/seano/Seano_ws/install/seano_vision:/home/seano/Seano_ws/install/seano_telemetry:/home/seano/Seano_ws/install/seano_startup:/home/seano/Seano_ws/install/seano_sensors:/home/seano/Seano_ws/install/seano_oceanography:/home/seano/Seano_ws/install/seano_network_monitor:/home/seano/Seano_ws/install/seano_mqtt_bridge:/home/seano/Seano_ws/install/seano_mission:/home/seano/Seano_ws/install/seano_logging:/home/seano/Seano_ws/install/seano_logger:/home/seano/Seano_ws/install/seano_failsafe:/home/seano/Seano_ws/install/seano_communication:/home/seano/Seano_ws/install/seano_command:/home/seano/Seano_ws/install/seano_anti_theft:/home/seano/resource_git/seano-logger/install/seano_sensors:/home/seano/resource_git/seano-logger/install/seano_logger:/opt/ros/humble', 'SHELL': '/bin/bash', 'LC_NAME': 'id_ID.UTF-8', 'LESSCLOSE': '/usr/bin/lesspipe %s %s', 'LC_MEASUREMENT': 'id_ID.UTF-8', 'LC_IDENTIFICATION': 'id_ID.UTF-8', 'VSCODE_GIT_ASKPASS_EXTRA_ARGS': '', 'PWD': '/home/seano/resource_git/seano-logger/build/seano_logger', 'LC_ALL': 'en_US.UTF-8', 'SSH_CONNECTION': '100.82.72.97 54822 100.97.147.109 22', 'XDG_DATA_DIRS': '/usr/share/gnome:/home/seano/.local/share/flatpak/exports/share:/var/lib/flatpak/exports/share:/usr/local/share:/usr/share:/var/lib/snapd/desktop', 'PYTHONPATH': '/home/seano/resource_git/seano-logger/build/seano_logger/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/seano/resource_git/seano-logger/install/seano_logger/lib/python3.10/site-packages:/home/seano/Seano_ws/build/seano_vision:/home/seano/Seano_ws/install/seano_vision/lib/python3.10/site-packages:/home/seano/Seano_ws/build/seano_telemetry:/home/seano/Seano_ws/install/seano_telemetry/lib/python3.10/site-packages:/home/seano/Seano_ws/build/seano_startup:/home/seano/Seano_ws/install/seano_startup/lib/python3.10/site-packages:/home/seano/Seano_ws/build/seano_sensors:/home/seano/Seano_ws/install/seano_sensors/lib/python3.10/site-packages:/home/seano/Seano_ws/build/seano_oceanography:/home/seano/Seano_ws/install/seano_oceanography/lib/python3.10/site-packages:/home/seano/Seano_ws/build/seano_network_monitor:/home/seano/Seano_ws/install/seano_network_monitor/lib/python3.10/site-packages:/home/seano/Seano_ws/install/seano_mqtt_bridge/lib/python3.10/site-packages:/home/seano/Seano_ws/build/seano_mission:/home/seano/Seano_ws/install/seano_mission/lib/python3.10/site-packages:/home/seano/Seano_ws/install/seano_logging/lib/python3.10/site-packages:/home/seano/Seano_ws/install/seano_logger/lib/python3.10/site-packages:/home/seano/Seano_ws/build/seano_failsafe:/home/seano/Seano_ws/install/seano_failsafe/lib/python3.10/site-packages:/home/seano/Seano_ws/build/seano_communication:/home/seano/Seano_ws/install/seano_communication/lib/python3.10/site-packages:/home/seano/Seano_ws/build/seano_command:/home/seano/Seano_ws/install/seano_command/lib/python3.10/site-packages:/home/seano/Seano_ws/build/seano_anti_theft:/home/seano/Seano_ws/install/seano_anti_theft/lib/python3.10/site-packages:/home/seano/resource_git/seano-logger/install/seano_sensors/lib/python3.10/site-packages:/home/seano/resource_git/seano-logger/install/seano_logger/lib/python3.10/site-packages:/opt/ros/humble/lib/python3.10/site-packages:/opt/ros/humble/local/lib/python3.10/dist-packages', 'LC_NUMERIC': 'id_ID.UTF-8', 'LC_PAPER': 'id_ID.UTF-8', 'COLCON': '1'}, 'shell': False}
+[16.013932] (-) TimerEvent: {}
+[16.105507] (seano_sensors) Command: {'cmd': ['/usr/bin/python3', '-W', 'ignore:setup.py install is deprecated', '-W', 'ignore:easy_install command is deprecated', 'setup.py', 'egg_info', '--egg-base', '../../build/seano_sensors', 'build', '--build-base', '/home/seano/resource_git/seano-logger/build/seano_sensors/build', 'install', '--record', '/home/seano/resource_git/seano-logger/build/seano_sensors/install.log', '--single-version-externally-managed', 'install_data'], 'cwd': '/home/seano/resource_git/seano-logger/src/seano_sensors', 'env': {'PYTHON_BASIC_REPL': '1', 'LESSOPEN': '| /usr/bin/lesspipe %s', 'USER': 'seano', 'SSH_CLIENT': '100.82.72.97 54822 22', 'LC_TIME': 'id_ID.UTF-8', 'GIT_ASKPASS': '/home/seano/.vscode-server/cli/servers/Stable-bdd88df003631aaa0bcbe057cb0a940b80a476fa/server/extensions/git/dist/askpass.sh', 'SHLVL': '2', 'LD_LIBRARY_PATH': '/opt/ros/humble/opt/rviz_ogre_vendor/lib:/opt/ros/humble/lib/aarch64-linux-gnu:/opt/ros/humble/lib', 'BROWSER': '/home/seano/.vscode-server/cli/servers/Stable-bdd88df003631aaa0bcbe057cb0a940b80a476fa/server/bin/helpers/browser.sh', 'HOME': '/home/seano', 'OLDPWD': '/home/seano/resource_git', 'TERM_PROGRAM_VERSION': '1.109.0', 'VSCODE_IPC_HOOK_CLI': '/tmp/vscode-ipc-cc5f921c-8871-469e-91f3-dbb98ac2b332.sock', 'ROS_PYTHON_VERSION': '3', 'VSCODE_GIT_ASKPASS_MAIN': '/home/seano/.vscode-server/cli/servers/Stable-bdd88df003631aaa0bcbe057cb0a940b80a476fa/server/extensions/git/dist/askpass-main.js', 'LC_MONETARY': 'id_ID.UTF-8', 'VSCODE_GIT_ASKPASS_NODE': '/home/seano/.vscode-server/cli/servers/Stable-bdd88df003631aaa0bcbe057cb0a940b80a476fa/server/node', 'SSL_CERT_FILE': '/usr/lib/ssl/certs/ca-certificates.crt', 'PYDEVD_DISABLE_FILE_VALIDATION': '1', 'BUNDLED_DEBUGPY_PATH': '/home/seano/.vscode-server/extensions/ms-python.debugpy-2026.6.0-linux-arm64/bundled/libs/debugpy', 'VSCODE_PYTHON_AUTOACTIVATE_GUARD': '1', 'DBUS_SESSION_BUS_ADDRESS': 'unix:path=/run/user/1000/bus', 'COLORTERM': 'truecolor', 'COLCON_PREFIX_PATH': '/home/seano/resource_git/seano-logger/install:/home/seano/Seano_ws/install', 'ROS_DISTRO': 'humble', '_': '/usr/bin/colcon', 'ROS_VERSION': '2', 'TERM': 'xterm-256color', 'ROS_LOCALHOST_ONLY': '0', 'PATH': '/home/seano/.vscode-server/cli/servers/Stable-bdd88df003631aaa0bcbe057cb0a940b80a476fa/server/bin/remote-cli:/home/seano/.local/bin:/opt/ros/humble/bin:/home/seano/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/home/seano/.vscode-server/extensions/ms-python.debugpy-2026.6.0-linux-arm64/bundled/scripts/noConfigScripts:/home/seano/.vscode-server/data/User/globalStorage/github.copilot-chat/debugCommand', 'LC_ADDRESS': 'id_ID.UTF-8', 'SSL_CERT_DIR': '/usr/lib/ssl/certs', 'VSCODE_DEBUGPY_ADAPTER_ENDPOINTS': '/home/seano/.vscode-server/extensions/ms-python.debugpy-2026.6.0-linux-arm64/.noConfigDebugAdapterEndpoints/endpoint-8f848731c9f8eb04.txt', 'LANG': 'en_US.UTF-8', 'PYTHONSTARTUP': '/home/seano/.vscode-server/data/User/workspaceStorage/64309d53a2f2d9cf19191a20c7a34d0e/ms-python.python/pythonrc.py', 'LC_TELEPHONE': 'id_ID.UTF-8', 'LS_COLORS': 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:', 'VSCODE_GIT_IPC_HANDLE': '/tmp/vscode-git-e8ad7d84aa.sock', 'TERM_PROGRAM': 'vscode', 'ROS_DOMAIN_ID': '0', 'AMENT_PREFIX_PATH': '/home/seano/Seano_ws/install/seano_vision:/home/seano/Seano_ws/install/seano_telemetry:/home/seano/Seano_ws/install/seano_startup:/home/seano/Seano_ws/install/seano_sensors:/home/seano/Seano_ws/install/seano_oceanography:/home/seano/Seano_ws/install/seano_network_monitor:/home/seano/Seano_ws/install/seano_mqtt_bridge:/home/seano/Seano_ws/install/seano_mission:/home/seano/Seano_ws/install/seano_logging:/home/seano/Seano_ws/install/seano_logger:/home/seano/Seano_ws/install/seano_failsafe:/home/seano/Seano_ws/install/seano_communication:/home/seano/Seano_ws/install/seano_command:/home/seano/Seano_ws/install/seano_anti_theft:/home/seano/resource_git/seano-logger/install/seano_sensors:/home/seano/resource_git/seano-logger/install/seano_logger:/opt/ros/humble', 'SHELL': '/bin/bash', 'LC_NAME': 'id_ID.UTF-8', 'LESSCLOSE': '/usr/bin/lesspipe %s %s', 'LC_MEASUREMENT': 'id_ID.UTF-8', 'LC_IDENTIFICATION': 'id_ID.UTF-8', 'VSCODE_GIT_ASKPASS_EXTRA_ARGS': '', 'PWD': '/home/seano/resource_git/seano-logger/build/seano_sensors', 'LC_ALL': 'en_US.UTF-8', 'SSH_CONNECTION': '100.82.72.97 54822 100.97.147.109 22', 'XDG_DATA_DIRS': '/usr/share/gnome:/home/seano/.local/share/flatpak/exports/share:/var/lib/flatpak/exports/share:/usr/local/share:/usr/share:/var/lib/snapd/desktop', 'PYTHONPATH': '/home/seano/resource_git/seano-logger/build/seano_sensors/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/seano/resource_git/seano-logger/install/seano_sensors/lib/python3.10/site-packages:/home/seano/Seano_ws/build/seano_vision:/home/seano/Seano_ws/install/seano_vision/lib/python3.10/site-packages:/home/seano/Seano_ws/build/seano_telemetry:/home/seano/Seano_ws/install/seano_telemetry/lib/python3.10/site-packages:/home/seano/Seano_ws/build/seano_startup:/home/seano/Seano_ws/install/seano_startup/lib/python3.10/site-packages:/home/seano/Seano_ws/build/seano_sensors:/home/seano/Seano_ws/install/seano_sensors/lib/python3.10/site-packages:/home/seano/Seano_ws/build/seano_oceanography:/home/seano/Seano_ws/install/seano_oceanography/lib/python3.10/site-packages:/home/seano/Seano_ws/build/seano_network_monitor:/home/seano/Seano_ws/install/seano_network_monitor/lib/python3.10/site-packages:/home/seano/Seano_ws/install/seano_mqtt_bridge/lib/python3.10/site-packages:/home/seano/Seano_ws/build/seano_mission:/home/seano/Seano_ws/install/seano_mission/lib/python3.10/site-packages:/home/seano/Seano_ws/install/seano_logging/lib/python3.10/site-packages:/home/seano/Seano_ws/install/seano_logger/lib/python3.10/site-packages:/home/seano/Seano_ws/build/seano_failsafe:/home/seano/Seano_ws/install/seano_failsafe/lib/python3.10/site-packages:/home/seano/Seano_ws/build/seano_communication:/home/seano/Seano_ws/install/seano_communication/lib/python3.10/site-packages:/home/seano/Seano_ws/build/seano_command:/home/seano/Seano_ws/install/seano_command/lib/python3.10/site-packages:/home/seano/Seano_ws/build/seano_anti_theft:/home/seano/Seano_ws/install/seano_anti_theft/lib/python3.10/site-packages:/home/seano/resource_git/seano-logger/install/seano_sensors/lib/python3.10/site-packages:/home/seano/resource_git/seano-logger/install/seano_logger/lib/python3.10/site-packages:/opt/ros/humble/lib/python3.10/site-packages:/opt/ros/humble/local/lib/python3.10/dist-packages', 'LC_NUMERIC': 'id_ID.UTF-8', 'LC_PAPER': 'id_ID.UTF-8', 'COLCON': '1'}, 'shell': False}
+[16.114952] (-) TimerEvent: {}
+[16.217835] (-) TimerEvent: {}
+[16.321981] (-) TimerEvent: {}
+[16.424826] (-) TimerEvent: {}
+[16.528243] (-) TimerEvent: {}
+[16.632002] (-) TimerEvent: {}
+[16.735520] (-) TimerEvent: {}
+[16.838445] (-) TimerEvent: {}
+[16.943325] (-) TimerEvent: {}
+[17.060195] (-) TimerEvent: {}
+[17.166184] (-) TimerEvent: {}
+[17.269705] (-) TimerEvent: {}
+[17.372357] (-) TimerEvent: {}
+[17.476036] (-) TimerEvent: {}
+[17.587667] (-) TimerEvent: {}
+[17.688926] (-) TimerEvent: {}
+[17.790035] (-) TimerEvent: {}
+[17.891174] (-) TimerEvent: {}
+[17.992226] (-) TimerEvent: {}
+[18.093855] (-) TimerEvent: {}
+[18.196500] (-) TimerEvent: {}
+[18.297650] (-) TimerEvent: {}
+[18.401257] (-) TimerEvent: {}
+[18.506476] (-) TimerEvent: {}
+[18.611496] (-) TimerEvent: {}
+[18.712938] (-) TimerEvent: {}
+[18.814065] (-) TimerEvent: {}
+[18.915354] (-) TimerEvent: {}
+[18.944807] (seano_sensors) StdoutLine: {'line': b'running egg_info\n'}
+[19.015613] (-) TimerEvent: {}
+[19.021751] (seano_logger) StdoutLine: {'line': b'running egg_info\n'}
+[19.105217] (seano_sensors) StdoutLine: {'line': b'writing ../../build/seano_sensors/seano_sensors.egg-info/PKG-INFO\n'}
+[19.115828] (-) TimerEvent: {}
+[19.117297] (seano_sensors) StdoutLine: {'line': b'writing dependency_links to ../../build/seano_sensors/seano_sensors.egg-info/dependency_links.txt\n'}
+[19.119919] (seano_sensors) StdoutLine: {'line': b'writing entry points to ../../build/seano_sensors/seano_sensors.egg-info/entry_points.txt\n'}
+[19.122688] (seano_sensors) StdoutLine: {'line': b'writing requirements to ../../build/seano_sensors/seano_sensors.egg-info/requires.txt\n'}
+[19.128713] (seano_sensors) StdoutLine: {'line': b'writing top-level names to ../../build/seano_sensors/seano_sensors.egg-info/top_level.txt\n'}
+[19.134518] (seano_logger) StdoutLine: {'line': b'writing ../../build/seano_logger/seano_logger.egg-info/PKG-INFO\n'}
+[19.140066] (seano_logger) StdoutLine: {'line': b'writing dependency_links to ../../build/seano_logger/seano_logger.egg-info/dependency_links.txt\n'}
+[19.143691] (seano_logger) StdoutLine: {'line': b'writing entry points to ../../build/seano_logger/seano_logger.egg-info/entry_points.txt\n'}
+[19.152659] (seano_logger) StdoutLine: {'line': b'writing requirements to ../../build/seano_logger/seano_logger.egg-info/requires.txt\n'}
+[19.163781] (seano_logger) StdoutLine: {'line': b'writing top-level names to ../../build/seano_logger/seano_logger.egg-info/top_level.txt\n'}
+[19.219940] (-) TimerEvent: {}
+[19.327064] (-) TimerEvent: {}
+[19.346532] (seano_logger) StdoutLine: {'line': b"reading manifest file '../../build/seano_logger/seano_logger.egg-info/SOURCES.txt'\n"}
+[19.352083] (seano_logger) StdoutLine: {'line': b"writing manifest file '../../build/seano_logger/seano_logger.egg-info/SOURCES.txt'\n"}
+[19.354877] (seano_logger) StdoutLine: {'line': b'running build\n'}
+[19.355588] (seano_logger) StdoutLine: {'line': b'running build_py\n'}
+[19.356978] (seano_sensors) StdoutLine: {'line': b"reading manifest file '../../build/seano_sensors/seano_sensors.egg-info/SOURCES.txt'\n"}
+[19.357694] (seano_logger) StdoutLine: {'line': b'copying seano_logger/logger_node.py -> /home/seano/resource_git/seano-logger/build/seano_logger/build/lib/seano_logger\n'}
+[19.369933] (seano_logger) StdoutLine: {'line': b'copying seano_logger/__init__.py -> /home/seano/resource_git/seano-logger/build/seano_logger/build/lib/seano_logger\n'}
+[19.372452] (seano_logger) StdoutLine: {'line': b'running install\n'}
+[19.382964] (seano_sensors) StdoutLine: {'line': b"writing manifest file '../../build/seano_sensors/seano_sensors.egg-info/SOURCES.txt'\n"}
+[19.385747] (seano_sensors) StdoutLine: {'line': b'running build\n'}
+[19.386317] (seano_sensors) StdoutLine: {'line': b'running build_py\n'}
+[19.386534] (seano_sensors) StdoutLine: {'line': b'copying seano_sensors/gps_reader.py -> /home/seano/resource_git/seano-logger/build/seano_sensors/build/lib/seano_sensors\n'}
+[19.394805] (seano_sensors) StdoutLine: {'line': b'copying seano_sensors/battery_reader.py -> /home/seano/resource_git/seano-logger/build/seano_sensors/build/lib/seano_sensors\n'}
+[19.400569] (seano_sensors) StdoutLine: {'line': b'copying seano_sensors/imu_reader.py -> /home/seano/resource_git/seano-logger/build/seano_sensors/build/lib/seano_sensors\n'}
+[19.410591] (seano_logger) StdoutLine: {'line': b'running install_lib\n'}
+[19.413023] (seano_sensors) StdoutLine: {'line': b'copying seano_sensors/mission_state_reader_node.py -> /home/seano/resource_git/seano-logger/build/seano_sensors/build/lib/seano_sensors\n'}
+[19.423582] (seano_sensors) StdoutLine: {'line': b'copying seano_sensors/video_logger_node.py -> /home/seano/resource_git/seano-logger/build/seano_sensors/build/lib/seano_sensors\n'}
+[19.427914] (-) TimerEvent: {}
+[19.431659] (seano_sensors) StdoutLine: {'line': b'copying seano_sensors/ctd_adcp_reader.py -> /home/seano/resource_git/seano-logger/build/seano_sensors/build/lib/seano_sensors\n'}
+[19.435950] (seano_sensors) StdoutLine: {'line': b'copying seano_sensors/__init__.py -> /home/seano/resource_git/seano-logger/build/seano_sensors/build/lib/seano_sensors\n'}
+[19.438109] (seano_sensors) StdoutLine: {'line': b'running install\n'}
+[19.474676] (seano_logger) StdoutLine: {'line': b'running install_data\n'}
+[19.477132] (seano_logger) StdoutLine: {'line': b'copying resource/seano_logger -> /home/seano/resource_git/seano-logger/install/seano_logger/share/ament_index/resource_index/packages\n'}
+[19.478843] (seano_logger) StdoutLine: {'line': b'copying package.xml -> /home/seano/resource_git/seano-logger/install/seano_logger/share/seano_logger\n'}
+[19.480674] (seano_sensors) StdoutLine: {'line': b'running install_lib\n'}
+[19.489652] (seano_logger) StdoutLine: {'line': b'copying launch/seano_all.launch.py -> /home/seano/resource_git/seano-logger/install/seano_logger/share/seano_logger/launch\n'}
+[19.493996] (seano_logger) StdoutLine: {'line': b'running install_egg_info\n'}
+[19.528223] (-) TimerEvent: {}
+[19.565843] (seano_logger) StdoutLine: {'line': b"removing '/home/seano/resource_git/seano-logger/install/seano_logger/lib/python3.10/site-packages/seano_logger-0.0.0-py3.10.egg-info' (and everything under it)\n"}
+[19.573895] (seano_logger) StdoutLine: {'line': b'Copying ../../build/seano_logger/seano_logger.egg-info to /home/seano/resource_git/seano-logger/install/seano_logger/lib/python3.10/site-packages/seano_logger-0.0.0-py3.10.egg-info\n'}
+[19.578994] (seano_sensors) StdoutLine: {'line': b'copying /home/seano/resource_git/seano-logger/build/seano_sensors/build/lib/seano_sensors/video_logger_node.py -> /home/seano/resource_git/seano-logger/install/seano_sensors/lib/python3.10/site-packages/seano_sensors\n'}
+[19.585651] (seano_logger) StdoutLine: {'line': b'running install_scripts\n'}
+[19.601978] (seano_sensors) StdoutLine: {'line': b'byte-compiling /home/seano/resource_git/seano-logger/install/seano_sensors/lib/python3.10/site-packages/seano_sensors/video_logger_node.py to video_logger_node.cpython-310.pyc\n'}
+[19.628605] (-) TimerEvent: {}
+[19.648056] (seano_sensors) StdoutLine: {'line': b'running install_data\n'}
+[19.654879] (seano_sensors) StdoutLine: {'line': b'copying resource/seano_sensors -> /home/seano/resource_git/seano-logger/install/seano_sensors/share/ament_index/resource_index/packages\n'}
+[19.656551] (seano_sensors) StdoutLine: {'line': b'copying package.xml -> /home/seano/resource_git/seano-logger/install/seano_sensors/share/seano_sensors\n'}
+[19.657730] (seano_sensors) StdoutLine: {'line': b'running install_egg_info\n'}
+[19.728811] (-) TimerEvent: {}
+[19.763751] (seano_sensors) StdoutLine: {'line': b"removing '/home/seano/resource_git/seano-logger/install/seano_sensors/lib/python3.10/site-packages/seano_sensors-0.0.0-py3.10.egg-info' (and everything under it)\n"}
+[19.772214] (seano_sensors) StdoutLine: {'line': b'Copying ../../build/seano_sensors/seano_sensors.egg-info to /home/seano/resource_git/seano-logger/install/seano_sensors/lib/python3.10/site-packages/seano_sensors-0.0.0-py3.10.egg-info\n'}
+[19.794827] (seano_sensors) StdoutLine: {'line': b'running install_scripts\n'}
+[19.830172] (-) TimerEvent: {}
+[19.932982] (-) TimerEvent: {}
+[20.035447] (-) TimerEvent: {}
+[20.149568] (-) TimerEvent: {}
+[20.251816] (-) TimerEvent: {}
+[20.354363] (-) TimerEvent: {}
+[20.455582] (-) TimerEvent: {}
+[20.557249] (-) TimerEvent: {}
+[20.569191] (seano_sensors) StdoutLine: {'line': b'Installing battery_reader script to /home/seano/resource_git/seano-logger/install/seano_sensors/lib/seano_sensors\n'}
+[20.571200] (seano_sensors) StdoutLine: {'line': b'Installing ctd_adcp_reader script to /home/seano/resource_git/seano-logger/install/seano_sensors/lib/seano_sensors\n'}
+[20.572234] (seano_sensors) StdoutLine: {'line': b'Installing gps_reader script to /home/seano/resource_git/seano-logger/install/seano_sensors/lib/seano_sensors\n'}
+[20.574947] (seano_sensors) StdoutLine: {'line': b'Installing imu_reader script to /home/seano/resource_git/seano-logger/install/seano_sensors/lib/seano_sensors\n'}
+[20.576546] (seano_sensors) StdoutLine: {'line': b'Installing mission_state_reader_node script to /home/seano/resource_git/seano-logger/install/seano_sensors/lib/seano_sensors\n'}
+[20.590855] (seano_sensors) StdoutLine: {'line': b'Installing video_logger_node script to /home/seano/resource_git/seano-logger/install/seano_sensors/lib/seano_sensors\n'}
+[20.592218] (seano_sensors) StdoutLine: {'line': b"writing list of installed files to '/home/seano/resource_git/seano-logger/build/seano_sensors/install.log'\n"}
+[20.657936] (-) TimerEvent: {}
+[20.761225] (-) TimerEvent: {}
+[20.888961] (seano_sensors) CommandEnded: {'returncode': 0}
+[20.890676] (-) TimerEvent: {}
+[20.992449] (-) TimerEvent: {}
+[21.101610] (-) TimerEvent: {}
+[21.209418] (-) TimerEvent: {}
+[21.310830] (-) TimerEvent: {}
+[21.391509] (seano_sensors) JobEnded: {'identifier': 'seano_sensors', 'rc': 0}
+[21.411074] (-) TimerEvent: {}
+[21.512163] (-) TimerEvent: {}
+[21.613304] (-) TimerEvent: {}
+[21.632306] (seano_logger) StdoutLine: {'line': b'Installing logger_node script to /home/seano/resource_git/seano-logger/install/seano_logger/lib/seano_logger\n'}
+[21.637538] (seano_logger) StdoutLine: {'line': b"writing list of installed files to '/home/seano/resource_git/seano-logger/build/seano_logger/install.log'\n"}
+[21.713538] (-) TimerEvent: {}
+[21.814641] (-) TimerEvent: {}
+[21.917051] (-) TimerEvent: {}
+[22.021643] (-) TimerEvent: {}
+[22.123982] (-) TimerEvent: {}
+[22.225271] (-) TimerEvent: {}
+[22.284538] (seano_logger) CommandEnded: {'returncode': 0}
+[22.329835] (-) TimerEvent: {}
+[22.430959] (-) TimerEvent: {}
+[22.438033] (seano_logger) JobEnded: {'identifier': 'seano_logger', 'rc': 0}
+[22.469030] (-) EventReactorShutdown: {}

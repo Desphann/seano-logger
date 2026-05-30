@@ -1,106 +1,149 @@
-import math
-import random
-import time
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+ADCP Reader - Serial USB
+========================
+Membaca data raw ADCP dari ESP32 via Serial USB dan publish ke ROS2.
+
+Format serial masuk:
+    ADCP:<Temp_C>,<V1_ms>,<V2_ms>,<V3_ms>,<V4_ms>
+
+    Temp_C : 24.86 ~ 24.98  °C
+    V1_ms  : -0.213 ~ -0.003 m/s
+    V2_ms  :  0.058 ~  0.158 m/s
+    V3_ms  : -0.019 ~  0.001 m/s
+    V4_ms  : -0.058 ~ -0.012 m/s
+
+Publish ke /adcp/data  (Float64MultiArray):
+    [Temp_C, V1_ms, V2_ms, V3_ms, V4_ms]
+"""
+
+import threading
 
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float64MultiArray
 
+import serial
 
-class ADCPSim(Node):
+
+class ADCPReader(Node):
     def __init__(self):
         super().__init__('adcp_reader')
 
-        self.declare_parameter('sample_rate', 1.0)
-        self.sample_rate = float(self.get_parameter('sample_rate').value)
+        # ── Parameter ──────────────────────────────────────────────
+        self.declare_parameter('serial_port', '/dev/ttyUSB0')
+        self.declare_parameter('baud_rate',   115200)
 
-        self.num_cells = 8
-        self.num_beams = 4
-        self.cell_size_m = 0.5
-        self.blanking_distance_m = 0.7
+        self.serial_port = self.get_parameter('serial_port').value
+        self.baud_rate   = int(self.get_parameter('baud_rate').value)
 
-        self.base_heading = 45.0
-        self.base_pitch = 1.5
-        self.base_roll = -0.8
-        self.base_temp = 28.5
-        self.base_salinity = 33.0
-        self.base_pressure = 5.0
-
+        # ── Publisher ──────────────────────────────────────────────
         self.publisher_ = self.create_publisher(Float64MultiArray, '/adcp/data', 10)
-        self.start_time = time.time()
-        self.timer = self.create_timer(1.0 / self.sample_rate, self.publish_adcp)
 
-        self.publish_ok_reported = False
+        # ── State ──────────────────────────────────────────────────
+        self.publish_ok_reported    = False
         self.publish_error_reported = False
+        self.ser                    = None
 
         self.get_logger().info(
-            f"ADCP Reader started | topic=/adcp/data | sample_rate={self.sample_rate} Hz"
+            f"ADCP Reader started | port={self.serial_port} | "
+            f"baud={self.baud_rate} | topic=/adcp/data"
         )
 
-    def publish_adcp(self):
+        self._thread = threading.Thread(target=self._read_loop, daemon=True)
+        self._thread.start()
+
+    # ──────────────────────────────────────────────────────────────
+    #  Serial
+    # ──────────────────────────────────────────────────────────────
+    def _open_serial(self):
+        import time
+        while rclpy.ok():
+            try:
+                self.ser = serial.Serial(self.serial_port, self.baud_rate, timeout=2.0)
+                self.get_logger().info(f"Serial port terbuka: {self.serial_port}")
+                return True
+            except serial.SerialException as e:
+                self.get_logger().error(f"Gagal buka serial {self.serial_port}: {e} | retry 3s...")
+                time.sleep(3.0)
+        return False
+
+    def _read_loop(self):
+        if not self._open_serial():
+            return
+
+        while rclpy.ok():
+            try:
+                raw = self.ser.readline()
+                if not raw:
+                    continue
+
+                line = raw.decode('ascii', errors='ignore').strip()
+
+                if not line or line.startswith('#'):
+                    continue
+
+                if not line.startswith('ADCP:'):
+                    continue
+
+                self._parse_and_publish(line[5:])   # buang prefix "ADCP:"
+
+            except serial.SerialException as e:
+                self.get_logger().error(f"Serial error: {e} | reconnect...")
+                self._open_serial()
+            except Exception as e:
+                if not self.publish_error_reported:
+                    self.get_logger().error(f"ADCP parse error: {e}")
+                    self.publish_error_reported = True
+                    self.publish_ok_reported    = False
+
+    # ──────────────────────────────────────────────────────────────
+    #  Parse & publish
+    # ──────────────────────────────────────────────────────────────
+    def _parse_and_publish(self, payload: str):
+        """
+        payload = "Temp_C,V1_ms,V2_ms,V3_ms,V4_ms"
+        """
+        parts = payload.split(',')
+        if len(parts) < 5:
+            self.get_logger().warn(f"ADCP: format tidak lengkap -> '{payload}'")
+            return
+
         try:
-            t = time.time() - self.start_time
+            temp_c = float(parts[0])
+            v1     = float(parts[1])
+            v2     = float(parts[2])
+            v3     = float(parts[3])
+            v4     = float(parts[4])
+        except ValueError as e:
+            self.get_logger().warn(f"ADCP: konversi float gagal -> {e}")
+            return
 
-            heading = self.base_heading + 5.0 * math.sin(t * 0.03)
-            pitch = self.base_pitch + 1.0 * math.sin(t * 0.07)
-            roll = self.base_roll + 1.2 * math.cos(t * 0.06)
-            temperature = self.base_temp + 0.3 * math.sin(t * 0.01)
-            salinity = self.base_salinity + 0.1 * math.cos(t * 0.02)
-            pressure = self.base_pressure + 0.5 * math.sin(t * 0.015)
+        msg      = Float64MultiArray()
+        msg.data = [temp_c, v1, v2, v3, v4]
+        self.publisher_.publish(msg)
 
-            data = [
-                float(self.num_cells),
-                float(self.num_beams),
-                float(self.cell_size_m),
-                float(self.blanking_distance_m),
-                round(heading, 3),
-                round(pitch, 3),
-                round(roll, 3),
-                round(temperature, 3),
-                round(salinity, 3),
-                round(pressure, 3),
-            ]
-
-            for cell in range(self.num_cells):
-                depth_factor = 1.0 - (cell * 0.08)
-
-                east_current = 0.8 * math.sin(t * 0.08 + cell * 0.15)
-                north_current = 0.5 * math.cos(t * 0.06 + cell * 0.12)
-                vertical_current = 0.05 * math.sin(t * 0.10 + cell * 0.20)
-
-                beam_1 = (east_current + north_current) * depth_factor + random.uniform(-0.03, 0.03)
-                beam_2 = (-east_current + north_current) * depth_factor + random.uniform(-0.03, 0.03)
-                beam_3 = (east_current - north_current) * depth_factor + random.uniform(-0.03, 0.03)
-                beam_4 = vertical_current + random.uniform(-0.02, 0.02)
-
-                data.extend([
-                    round(beam_1, 3),
-                    round(beam_2, 3),
-                    round(beam_3, 3),
-                    round(beam_4, 3),
-                ])
-
-            msg = Float64MultiArray()
-            msg.data = data
-            self.publisher_.publish(msg)
-
-            if not self.publish_ok_reported:
-                self.get_logger().info(
-                    f"ADCP dummy publish active | cells={self.num_cells} | beams={self.num_beams}"
-                )
-                self.publish_ok_reported = True
-                self.publish_error_reported = False
-
-        except Exception as e:
-            if not self.publish_error_reported:
-                self.get_logger().error(f"ADCP publish failed: {e}")
-                self.publish_error_reported = True
-                self.publish_ok_reported = False
+        if not self.publish_ok_reported:
+            self.get_logger().info(
+                f"ADCP publish aktif | temp={temp_c:.2f}°C | "
+                f"V1={v1:.3f} V2={v2:.3f} V3={v3:.3f} V4={v4:.3f} m/s"
+            )
+            self.publish_ok_reported    = True
+            self.publish_error_reported = False
 
 
-def main():
-    rclpy.init()
-    node = ADCPSim()
-    rclpy.spin(node)
-    node.destroy_node()
-    rclpy.shutdown()
+def main(args=None):
+    rclpy.init(args=args)
+    node = ADCPReader()
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
+
+
+if __name__ == '__main__':
+    main()

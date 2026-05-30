@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import json
+import socket
 import time
 from datetime import datetime
 
@@ -42,6 +43,13 @@ class MissionStateReaderNode(Node):
 
         self.declare_parameter("snapshot_rate_hz", 1.0)
 
+        # Internet monitor untuk data pengujian/KTI.
+        # Tidak ada MQTT/cloud. Hanya status internet umum.
+        self.declare_parameter("internet_probe_host", "1.1.1.1")
+        self.declare_parameter("internet_probe_port", 53)
+        self.declare_parameter("internet_probe_timeout", 0.4)
+        self.declare_parameter("internet_check_rate_hz", 1.0)
+
         self.state_topic = str(self.get_parameter("state_topic").value)
         self.waypoints_topic = str(self.get_parameter("waypoints_topic").value)
         self.waypoint_reached_topic = str(
@@ -60,6 +68,18 @@ class MissionStateReaderNode(Node):
         self.snapshot_rate_hz = float(self.get_parameter("snapshot_rate_hz").value)
         if self.snapshot_rate_hz <= 0.0:
             self.snapshot_rate_hz = 1.0
+
+        self.internet_probe_host = str(self.get_parameter("internet_probe_host").value)
+        self.internet_probe_port = int(self.get_parameter("internet_probe_port").value)
+        self.internet_probe_timeout = float(
+            self.get_parameter("internet_probe_timeout").value
+        )
+        self.internet_check_rate_hz = float(
+            self.get_parameter("internet_check_rate_hz").value
+        )
+
+        if self.internet_check_rate_hz <= 0.0:
+            self.internet_check_rate_hz = 1.0
 
         self.qos = QoSProfile(
             history=HistoryPolicy.KEEP_LAST,
@@ -99,6 +119,11 @@ class MissionStateReaderNode(Node):
             self.publish_snapshot,
         )
 
+        self.internet_timer = self.create_timer(
+            1.0 / self.internet_check_rate_hz,
+            self.monitor_internet,
+        )
+
         self.last_connected = False
         self.last_armed = False
         self.last_guided = False
@@ -128,10 +153,18 @@ class MissionStateReaderNode(Node):
         self.gps_status = None
         self.gps_service = None
 
+        # Internet monitor state untuk KTI/pengujian.
+        self.internet_online = None
+        self.internet_lost_count = 0
+        self.internet_lost_start_time = None
+        self.internet_total_down_sec = 0.0
+        self.internet_first_check_time = None
+        self.internet_last_check_time = None
+
         self.state_received = False
         self.last_status_text = None
 
-        self.set_status("MISSION STATE READER ACTIVE")
+        self.set_status("MISSION STATE READER ACTIVE | internet monitor: ONLINE/OFFLINE only")
 
     def set_status(self, text):
         if text != self.last_status_text:
@@ -153,6 +186,11 @@ class MissionStateReaderNode(Node):
             "unix_time": self.unix_time(),
             "ros_time": ros_time,
             "source_node": "mission_state_reader_node",
+            "internet_status": self.internet_text(self.internet_online),
+            "internet_lost_count": self.internet_lost_count,
+            "internet_total_down_sec": round(self.get_current_total_internet_down_sec(), 3),
+            "internet_current_down_sec": round(self.get_current_internet_down_sec(), 3),
+            "internet_availability_percent": round(self.get_internet_availability_percent(), 3),
         }
 
     def publish_json(self, publisher, payload):
@@ -160,6 +198,147 @@ class MissionStateReaderNode(Node):
         msg.data = json.dumps(payload, separators=(",", ":"))
         publisher.publish(msg)
 
+    # ============================================================
+    # INTERNET MONITOR
+    # ============================================================
+    def tcp_probe(self, host, port, timeout_sec):
+        try:
+            with socket.create_connection((host, int(port)), timeout=float(timeout_sec)):
+                return True
+        except Exception:
+            return False
+
+    def internet_text(self, value):
+        if value is None:
+            return "UNKNOWN"
+        return "ONLINE" if value else "OFFLINE"
+
+    def get_current_internet_down_sec(self):
+        if self.internet_online is False and self.internet_lost_start_time is not None:
+            return time.time() - self.internet_lost_start_time
+        return 0.0
+
+    def get_current_total_internet_down_sec(self):
+        return self.internet_total_down_sec + self.get_current_internet_down_sec()
+
+    def get_internet_availability_percent(self):
+        if self.internet_first_check_time is None:
+            return 0.0
+
+        now = time.time()
+        elapsed = now - self.internet_first_check_time
+
+        if elapsed <= 0.0:
+            return 100.0 if self.internet_online else 0.0
+
+        total_down = self.get_current_total_internet_down_sec()
+        availability = 100.0 * (1.0 - total_down / elapsed)
+        return max(0.0, min(100.0, availability))
+
+    def monitor_internet(self):
+        internet_now = self.tcp_probe(
+            self.internet_probe_host,
+            self.internet_probe_port,
+            self.internet_probe_timeout,
+        )
+
+        now = time.time()
+
+        if self.internet_first_check_time is None:
+            self.internet_first_check_time = now
+
+        self.internet_last_check_time = now
+
+        if self.internet_online is None:
+            self.internet_online = internet_now
+
+            if internet_now:
+                self.publish_internet_event(
+                    event_type="INTERNET_ONLINE",
+                    detail="Internet ONLINE sejak awal monitor",
+                    extra={"transition": "initial_online"},
+                )
+            else:
+                self.internet_lost_count += 1
+                self.internet_lost_start_time = now
+                self.publish_internet_event(
+                    event_type="INTERNET_OFFLINE",
+                    detail="Internet OFFLINE sejak awal monitor",
+                    extra={"transition": "initial_offline"},
+                )
+
+            return
+
+        if self.internet_online and not internet_now:
+            self.internet_online = False
+            self.internet_lost_count += 1
+            self.internet_lost_start_time = now
+
+            self.publish_internet_event(
+                event_type="INTERNET_OFFLINE",
+                detail="Internet OFFLINE",
+                extra={"transition": "online_to_offline"},
+            )
+            return
+
+        if (not self.internet_online) and internet_now:
+            down_sec = 0.0
+
+            if self.internet_lost_start_time is not None:
+                down_sec = now - self.internet_lost_start_time
+                self.internet_total_down_sec += down_sec
+
+            self.internet_online = True
+            self.internet_lost_start_time = None
+
+            self.publish_internet_event(
+                event_type="INTERNET_ONLINE",
+                detail=f"Internet ONLINE kembali setelah {down_sec:.1f} detik offline",
+                extra={
+                    "transition": "offline_to_online",
+                    "last_down_sec": round(down_sec, 3),
+                },
+            )
+
+    def publish_internet_event(self, event_type, detail, extra=None):
+        payload = self.base_payload()
+        payload.update(
+            {
+                "type": "EVENT",
+                "event_type": event_type,
+                "detail": detail,
+                "connected": self.last_connected,
+                "armed": self.last_armed,
+                "guided": self.last_guided,
+                "manual_input": self.last_manual_input,
+                "mode": self.last_mode,
+                "mode_class": self.last_mode_class,
+                "system_status": self.last_system_status,
+                "current_waypoint_seq": self.current_waypoint_seq,
+                "last_reached_waypoint_seq": self.last_reached_waypoint_seq,
+                "waypoint_count": self.waypoint_count,
+                "groundspeed": self.groundspeed,
+                "airspeed": self.airspeed,
+                "heading": self.heading,
+                "throttle": self.throttle,
+                "altitude": self.altitude,
+                "climb": self.climb,
+                "latitude": self.latitude,
+                "longitude": self.longitude,
+                "gps_altitude": self.gps_altitude,
+                "gps_status": self.gps_status,
+                "gps_service": self.gps_service,
+            }
+        )
+
+        if extra:
+            payload.update(extra)
+
+        self.publish_json(self.event_pub, payload)
+
+    # ============================================================
+    # MODE CLASSIFICATION
+    # ============================================================
     def classify_mode(self, mode):
         m = str(mode).upper()
 
@@ -388,6 +567,8 @@ class MissionStateReaderNode(Node):
                 "gps_altitude": self.gps_altitude,
                 "gps_status": self.gps_status,
                 "gps_service": self.gps_service,
+                "internet_probe_host": self.internet_probe_host,
+                "internet_probe_port": self.internet_probe_port,
             }
         )
 

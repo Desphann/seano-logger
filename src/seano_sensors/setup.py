@@ -26,10 +26,8 @@ setup(
         'console_scripts': [
         'gps_reader = seano_sensors.gps_reader:main',
         'imu_reader = seano_sensors.imu_reader:main',
-        'ctd_reader = seano_sensors.ctd_reader:main',
-        'adcp_reader = seano_sensors.adcp_reader:main',
+        'ctd_adcp_reader = seano_sensors.ctd_adcp_reader:main',
         'battery_reader = seano_sensors.battery_reader:main',
-        'sbes_reader = seano_sensors.sbes_reader:main',
         'video_logger_node = seano_sensors.video_logger_node:main',
         'mission_state_reader_node = seano_sensors.mission_state_reader_node:main',
         ],

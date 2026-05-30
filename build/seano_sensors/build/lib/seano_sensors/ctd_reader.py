@@ -1,106 +1,150 @@
-import math
-import random
-import time
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+CTD Reader - Serial USB
+=======================
+Membaca data raw CTD dari ESP32 via Serial USB dan publish ke ROS2.
+
+Format serial masuk:
+    CTD:<depth>,<temp>,<cond>,<salinity>,<density>,<soundvel>
+
+Publish ke /ctd/data  (Float64MultiArray):
+    [depth, temp, cond, salinity, density, soundvel]
+"""
 
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float64MultiArray
 
+import serial
+import threading
 
-class CTDSim(Node):
+
+class CTDReader(Node):
     def __init__(self):
         super().__init__('ctd_reader')
 
-        self.declare_parameter('sample_rate', 1.0)
-        self.sample_rate = float(self.get_parameter('sample_rate').value)
+        # ── Parameter ──────────────────────────────────────────────
+        self.declare_parameter('serial_port', '/dev/ttyUSB0')
+        self.declare_parameter('baud_rate', 115200)
 
+        self.serial_port = self.get_parameter('serial_port').value
+        self.baud_rate   = int(self.get_parameter('baud_rate').value)
+
+        # ── Publisher ──────────────────────────────────────────────
         self.publisher_ = self.create_publisher(Float64MultiArray, '/ctd/data', 10)
-        self.start_time = time.time()
-        self.timer = self.create_timer(1.0 / self.sample_rate, self.publish_ctd)
 
-        self.publish_ok_reported = False
+        # ── State ──────────────────────────────────────────────────
+        self.publish_ok_reported    = False
         self.publish_error_reported = False
-
-        # baseline dummy
-        self.base_depth = 2.0          # m
-        self.base_temp = 28.5          # deg C
-        self.base_salinity = 32.0      # PSU
-        self.base_conductivity = 4.2   # S/m kira-kira dummy
-        self.base_density = 1020.0     # kg/m3
-        self.base_soundvel = 1535.0    # m/s
+        self.ser                    = None
 
         self.get_logger().info(
-            f"CTD Reader started | topic=/ctd/data | sample_rate={self.sample_rate} Hz"
+            f"CTD Reader started | port={self.serial_port} | baud={self.baud_rate} | topic=/ctd/data"
         )
 
-    def publish_ctd(self):
+        # Serial dibaca di thread terpisah agar tidak block spin ROS2
+        self._thread = threading.Thread(target=self._read_loop, daemon=True)
+        self._thread.start()
+
+    # ──────────────────────────────────────────────────────────────
+    #  Serial read loop
+    # ──────────────────────────────────────────────────────────────
+    def _open_serial(self):
+        while rclpy.ok():
+            try:
+                self.ser = serial.Serial(
+                    self.serial_port,
+                    self.baud_rate,
+                    timeout=2.0
+                )
+                self.get_logger().info(f"Serial port terbuka: {self.serial_port}")
+                return True
+            except serial.SerialException as e:
+                self.get_logger().error(
+                    f"Gagal membuka serial {self.serial_port}: {e} | retry 3s..."
+                )
+                import time; time.sleep(3.0)
+        return False
+
+    def _read_loop(self):
+        if not self._open_serial():
+            return
+
+        while rclpy.ok():
+            try:
+                raw = self.ser.readline()
+                if not raw:
+                    continue
+
+                line = raw.decode('ascii', errors='ignore').strip()
+
+                # Abaikan baris komentar / header dari ESP32
+                if not line or line.startswith('#'):
+                    continue
+
+                # Hanya proses baris CTD
+                if not line.startswith('CTD:'):
+                    continue
+
+                self._parse_and_publish(line[4:])   # buang prefix "CTD:"
+
+            except serial.SerialException as e:
+                self.get_logger().error(f"Serial error: {e} | mencoba reconnect...")
+                self._open_serial()
+            except Exception as e:
+                if not self.publish_error_reported:
+                    self.get_logger().error(f"CTD parse error: {e}")
+                    self.publish_error_reported = True
+                    self.publish_ok_reported    = False
+
+    # ──────────────────────────────────────────────────────────────
+    #  Parse & publish
+    # ──────────────────────────────────────────────────────────────
+    def _parse_and_publish(self, payload: str):
+        """
+        payload = "depth,temp,cond,salinity,density,soundvel"
+        """
+        parts = payload.split(',')
+        if len(parts) < 6:
+            self.get_logger().warn(f"CTD: format tidak lengkap -> '{payload}'")
+            return
+
         try:
-            t = time.time() - self.start_time
+            depth    = float(parts[0])
+            temp     = float(parts[1])
+            cond     = float(parts[2])
+            salinity = float(parts[3])
+            density  = float(parts[4])
+            soundvel = float(parts[5])
+        except ValueError as e:
+            self.get_logger().warn(f"CTD: konversi float gagal -> {e}")
+            return
 
-            # depth berubah pelan seperti kendaraan bergerak di perairan dangkal
-            depth = self.base_depth + 1.5 * math.sin(t * 0.08) + 0.3 * math.sin(t * 0.21)
-            depth += random.uniform(-0.03, 0.03)
-            depth = max(0.1, depth)
+        msg      = Float64MultiArray()
+        msg.data = [depth, temp, cond, salinity, density, soundvel]
+        self.publisher_.publish(msg)
 
-            # suhu sedikit turun saat depth bertambah + gelombang lambat
-            temperature = self.base_temp - 0.15 * depth + 0.25 * math.sin(t * 0.03)
-            temperature += random.uniform(-0.03, 0.03)
-
-            # salinity berubah halus
-            salinity = self.base_salinity + 0.4 * math.sin(t * 0.025 + 1.2)
-            salinity += 0.1 * math.cos(t * 0.06)
-            salinity += random.uniform(-0.02, 0.02)
-
-            # conductivity mengikuti salinity dan temperature secara sederhana
-            conductivity = self.base_conductivity
-            conductivity += 0.03 * (temperature - self.base_temp)
-            conductivity += 0.02 * (salinity - self.base_salinity)
-            conductivity += 0.05 * math.sin(t * 0.05)
-            conductivity += random.uniform(-0.01, 0.01)
-
-            # density dummy yang lebih logis:
-            # naik saat salinity naik, turun saat temperature naik
-            density = self.base_density
-            density += 0.78 * (salinity - self.base_salinity)
-            density -= 0.22 * (temperature - self.base_temp)
-            density += 0.05 * depth
-            density += random.uniform(-0.03, 0.03)
-
-            # sound velocity dummy:
-            # umumnya naik dengan temperature, salinity, dan sedikit dengan pressure/depth
-            soundvel = self.base_soundvel
-            soundvel += 2.8 * (temperature - self.base_temp)
-            soundvel += 1.2 * (salinity - self.base_salinity)
-            soundvel += 0.18 * depth
-            soundvel += random.uniform(-0.1, 0.1)
-
-            msg = Float64MultiArray()
-            msg.data = [
-                round(depth, 3),
-                round(temperature, 3),
-                round(conductivity, 3),
-                round(salinity, 3),
-                round(density, 3),
-                round(soundvel, 3)
-            ]
-
-            self.publisher_.publish(msg)
-
-            if not self.publish_ok_reported:
-                self.get_logger().info("CTD dummy publish active")
-                self.publish_ok_reported = True
-                self.publish_error_reported = False
-
-        except Exception as e:
-            if not self.publish_error_reported:
-                self.get_logger().error(f"CTD publish failed: {e}")
-                self.publish_error_reported = True
-                self.publish_ok_reported = False
+        if not self.publish_ok_reported:
+            self.get_logger().info(
+                f"CTD publish aktif | depth={depth:.3f} temp={temp:.3f} "
+                f"cond={cond:.3f} sal={salinity:.3f} den={density:.3f} sv={soundvel:.3f}"
+            )
+            self.publish_ok_reported    = True
+            self.publish_error_reported = False
 
 
-def main():
-    rclpy.init()
-    node = CTDSim()
-    rclpy.spin(node)
-    node.destroy_node()
-    rclpy.shutdown()
+def main(args=None):
+    rclpy.init(args=args)
+    node = CTDReader()
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
+
+
+if __name__ == '__main__':
+    main()

@@ -75,7 +75,7 @@ class SeanoLogger(Node):
         # ============================================================
         # SYNC CONFIG
         # ============================================================
-        self.sensors = ["gps", "imu", "ctd", "adcp", "sbes", "battery"]
+        self.sensors = ["gps", "imu", "ctd", "adcp", "battery"]
 
         self.sync_rate_hz = 1.0
         self.sync_period_ns = int(1e9 / self.sync_rate_hz)
@@ -214,6 +214,12 @@ class SeanoLogger(Node):
         self.last_metrics_time = time.time()
         self.jetson_temp_source = None
 
+        # ADCP format monitor.
+        self.adcp_format_warning_reported = False
+
+        # Terminal status dibuat singkat.
+        self.last_terminal_status = None
+
         # ============================================================
         # SUBSCRIBERS
         # ============================================================
@@ -227,7 +233,6 @@ class SeanoLogger(Node):
         self.create_subscription(Imu, "/mavros/imu/data", self.imu_callback, qos_profile_sensor_data, callback_group=self.cb_group)
         self.create_subscription(Float64MultiArray, "/ctd/data", self.ctd_callback, 50, callback_group=self.cb_group)
         self.create_subscription(Float64MultiArray, "/adcp/data", self.adcp_callback, 10, callback_group=self.cb_group)
-        self.create_subscription(Float64MultiArray, "/sbes/data", self.sbes_callback, 10, callback_group=self.cb_group)
         self.create_subscription(BatteryState, "/battery/state", self.battery_callback, qos_profile_sensor_data, callback_group=self.cb_group)
 
         # ============================================================
@@ -242,14 +247,16 @@ class SeanoLogger(Node):
 
         psutil.cpu_percent(interval=None)
 
-        self.get_logger().info("SEANO Logger standby")
-        self.get_logger().info("Mode: software-synchronized multi-sensor logger")
-        self.get_logger().info("Mission gate aktif: logging hanya saat /mavros/state armed=True")
-        self.get_logger().info(
-            f"Sync rate={self.sync_rate_hz:.2f} Hz | "
-            f"output_delay={self.sync_output_delay_ms:.0f} ms | "
-            f"tolerance={self.sync_tolerance_ms:.0f} ms"
-        )
+        self.set_terminal_status("LOGGER_NODE: READY")
+
+    # ============================================================
+    # TERMINAL STATUS
+    # ============================================================
+    def set_terminal_status(self, text):
+        if text == self.last_terminal_status:
+            return
+        self.last_terminal_status = text
+        self.get_logger().info(text)
 
     # ============================================================
     # TIME HELPERS
@@ -348,7 +355,7 @@ class SeanoLogger(Node):
         if self.logging_active:
             return
 
-        self.get_logger().info("ARMED detected -> preparing synchronous logger session")
+        self.set_terminal_status("LOGGER_NODE: STARTING")
         self.reset_session_state()
 
         self.start_time_obj = datetime.now()
@@ -362,7 +369,7 @@ class SeanoLogger(Node):
         self.mission_id = self.start_time_obj.strftime(f"MISSION_START_%H-%M-%S_{self.local_timezone}")
 
         if not self.prepare_base_paths(year, month, day):
-            self.get_logger().fatal("Tidak ada path logging valid. Logger kembali standby.")
+            self.set_terminal_status("LOGGER_NODE: NOT READY | storage unavailable")
             return
 
         self.init_folder_structure()
@@ -385,10 +392,7 @@ class SeanoLogger(Node):
         if self.last_waypoints_msg is not None:
             self.dump_waypoints(self.last_waypoints_msg)
 
-        for path in self.base_paths:
-            self.get_logger().info(f"Mission folder: {path}")
-
-        self.get_logger().info("SYNCHRONOUS LOGGER ACTIVE")
+        self.set_terminal_status(f"LOGGER_NODE: ACTIVE | mission_id={self.mission_id}")
 
     def stop_logging_session(self, reason="vehicle disarmed"):
         if not self.logging_active:
@@ -396,7 +400,7 @@ class SeanoLogger(Node):
 
         self.logging_active = False
         self.end_time_obj = datetime.now()
-        self.get_logger().info(f"DISARM detected -> closing logger session | {reason}")
+        self.set_terminal_status("LOGGER_NODE: CLOSING")
 
         self.flush_sensor_queues(force=True)
         self.write_sync_quality_summary()
@@ -410,7 +414,7 @@ class SeanoLogger(Node):
             pass
 
         self.reset_after_close()
-        self.get_logger().info("SEANO Logger kembali standby, menunggu armed berikutnya")
+        self.set_terminal_status("LOGGER_NODE: READY")
 
     def reset_session_state(self):
         self.external_ready = False
@@ -460,7 +464,6 @@ class SeanoLogger(Node):
         self.system_metrics_files = []
         self.system_metrics_writers = []
         self.mission_dirs = []
-        self.video_dirs = []
 
         self.mission_log_files = []
         self.mission_timeline_files = []
@@ -518,7 +521,7 @@ class SeanoLogger(Node):
                         raise RuntimeError("External SSD detected but not writable")
                     self.base_paths.append(external_base_path)
                     self.external_ready = True
-                    self.get_logger().info(f"External logging ready: {external_base_path}")
+                    pass
                 except Exception as e:
                     self.external_ready = False
                     self.external_failed_runtime = True
@@ -538,7 +541,7 @@ class SeanoLogger(Node):
                 if not self.test_write_access(local_base_path):
                     raise RuntimeError("Local path not writable")
                 self.base_paths.append(local_base_path)
-                self.get_logger().info(f"Local logging ready: {local_base_path}")
+                pass
             except Exception as e:
                 self.get_logger().error(f"Gagal membuat folder local logging: {local_base_path} | {e}")
 
@@ -548,14 +551,11 @@ class SeanoLogger(Node):
         for base_path in self.base_paths:
             mission_dir = os.path.join(base_path, "mission")
             sensor_dir = os.path.join(base_path, "sensor")
-            video_dir = os.path.join(base_path, "video")
 
             os.makedirs(mission_dir, exist_ok=True)
             os.makedirs(sensor_dir, exist_ok=True)
-            os.makedirs(video_dir, exist_ok=True)
 
             self.mission_dirs.append(mission_dir)
-            self.video_dirs.append(video_dir)
 
     def monitor_external_storage(self):
         if not self.logging_active:
@@ -590,7 +590,7 @@ class SeanoLogger(Node):
                 f.write(f"Sync Output Delay ms: {self.sync_output_delay_ms:.1f}\n")
                 f.write(f"Sync Tolerance ms: {self.sync_tolerance_ms:.1f}\n")
                 f.write("Sensor Files: CSV only\n")
-                f.write("Folder Structure: root + mission/ + sensor/ + video/\n")
+                f.write("Folder Structure: root + mission/ + sensor/\n")
                 f.write("Mission Gate: /mavros/state armed=True\n")
                 if state_msg is not None:
                     f.write(f"Start MAVROS Connected: {state_msg.connected}\n")
@@ -660,21 +660,9 @@ class SeanoLogger(Node):
         if sensor == "ctd":
             return base + ["depth", "temp", "cond", "salinity", "density", "soundvel"]
         if sensor == "adcp":
-            return base + [
-                "num_cells",
-                "num_beams",
-                "cell_size_m",
-                "blanking_distance_m",
-                "heading_deg",
-                "pitch_deg",
-                "roll_deg",
-                "temperature_c",
-                "salinity_psu",
-                "pressure_dbar",
-                "velocity_profile",
-            ]
-        if sensor == "sbes":
-            return base + ["depth", "water_temp", "quality_flag"]
+            # Format baru dari ADCP Reader:
+            # /adcp/data Float64MultiArray = [Temp_C, V1_ms, V2_ms, V3_ms, V4_ms]
+            return base + ["temp_c", "v1_ms", "v2_ms", "v3_ms", "v4_ms"]
         if sensor == "battery":
             return base + ["voltage_v", "current_a", "percentage_percent"]
 
@@ -705,20 +693,12 @@ class SeanoLogger(Node):
             ]
         if sensor == "adcp":
             return [
-                self.safe_value(payload.get("num_cells")),
-                self.safe_value(payload.get("num_beams")),
-                self.safe_value(payload.get("cell_size_m")),
-                self.safe_value(payload.get("blanking_distance_m")),
-                self.safe_value(payload.get("heading_deg")),
-                self.safe_value(payload.get("pitch_deg")),
-                self.safe_value(payload.get("roll_deg")),
-                self.safe_value(payload.get("temperature_c")),
-                self.safe_value(payload.get("salinity_psu")),
-                self.safe_value(payload.get("pressure_dbar")),
-                self.safe_value(payload.get("velocity_profile")),
+                self.safe_value(payload.get("temp_c")),
+                self.safe_value(payload.get("v1_ms")),
+                self.safe_value(payload.get("v2_ms")),
+                self.safe_value(payload.get("v3_ms")),
+                self.safe_value(payload.get("v4_ms")),
             ]
-        if sensor == "sbes":
-            return [self.safe_value(payload.get("depth")), self.safe_value(payload.get("water_temp")), self.safe_value(payload.get("quality_flag"))]
         if sensor == "battery":
             return [self.safe_value(payload.get("voltage_v")), self.safe_value(payload.get("current_a")), self.safe_value(payload.get("percentage_percent"))]
 
@@ -1047,47 +1027,35 @@ class SeanoLogger(Node):
         self.push_sensor_sample("ctd", payload, None)
 
     def adcp_callback(self, msg):
+        # Format baru dari ADCP Reader:
+        # /adcp/data Float64MultiArray = [Temp_C, V1_ms, V2_ms, V3_ms, V4_ms]
         data = list(msg.data)
 
-        if len(data) >= 10:
+        if len(data) < 5:
+            if not self.adcp_format_warning_reported:
+                self.get_logger().warning(
+                    f"ADCP data tidak lengkap: expected 5 values [Temp_C,V1,V2,V3,V4], got {len(data)} values"
+                )
+                self.adcp_format_warning_reported = True
+
             payload = {
-                "num_cells": int(data[0]),
-                "num_beams": int(data[1]),
-                "cell_size_m": data[2],
-                "blanking_distance_m": data[3],
-                "heading_deg": data[4],
-                "pitch_deg": data[5],
-                "roll_deg": data[6],
-                "temperature_c": data[7],
-                "salinity_psu": data[8],
-                "pressure_dbar": data[9],
-                "velocity_profile": ";".join(map(str, data[10:])),
+                "temp_c": math.nan,
+                "v1_ms": math.nan,
+                "v2_ms": math.nan,
+                "v3_ms": math.nan,
+                "v4_ms": math.nan,
             }
         else:
             payload = {
-                "num_cells": "",
-                "num_beams": "",
-                "cell_size_m": "",
-                "blanking_distance_m": "",
-                "heading_deg": "",
-                "pitch_deg": "",
-                "roll_deg": "",
-                "temperature_c": "",
-                "salinity_psu": "",
-                "pressure_dbar": "",
-                "velocity_profile": ";".join(map(str, data)),
+                "temp_c": data[0],
+                "v1_ms": data[1],
+                "v2_ms": data[2],
+                "v3_ms": data[3],
+                "v4_ms": data[4],
             }
+            self.adcp_format_warning_reported = False
 
         self.push_sensor_sample("adcp", payload, None)
-
-    def sbes_callback(self, msg):
-        data = list(msg.data)
-        payload = {
-            "depth": data[0] if len(data) > 0 else math.nan,
-            "water_temp": data[1] if len(data) > 1 else math.nan,
-            "quality_flag": data[2] if len(data) > 2 else math.nan,
-        }
-        self.push_sensor_sample("sbes", payload, None)
 
     def battery_callback(self, msg):
         voltage = msg.voltage
@@ -1255,8 +1223,10 @@ class SeanoLogger(Node):
                 f.write("- sensor/imu.csv\n")
                 f.write("- sensor/ctd.csv\n")
                 f.write("- sensor/adcp.csv\n")
-                f.write("- sensor/sbes.csv\n")
                 f.write("- sensor/battery.csv\n")
+                f.write("\n")
+                f.write("Video files:\n")
+                f.write("- logger_node tidak membuat folder video/. Folder video/ dikelola oleh video_logger_node.\n")
 
             mission_log_file = open(log_path, "w", buffering=1)
             mission_log_file.write("SEANO Mission Events\n")
@@ -1479,7 +1449,6 @@ class SeanoLogger(Node):
                 "ctd_hz",
                 "adcp_hz",
                 "battery_hz",
-                "sbes_hz",
                 "mission_hz",
             ])
 
@@ -1530,7 +1499,6 @@ class SeanoLogger(Node):
             f"{self.get_sensor_rate('ctd'):.2f}",
             f"{self.get_sensor_rate('adcp'):.2f}",
             f"{self.get_sensor_rate('battery'):.2f}",
-            f"{self.get_sensor_rate('sbes'):.2f}",
             f"{self.get_mission_timeline_rate():.2f}",
         ]
 
@@ -1586,13 +1554,13 @@ class SeanoLogger(Node):
                 if zone_type == preferred:
                     if self.jetson_temp_source != zone_type:
                         self.jetson_temp_source = zone_type
-                        self.get_logger().info(f"Jetson temperature source: {zone_type}")
+                        pass
                     return temp_c
 
         zone_type, temp_c = valid_entries[0]
         if self.jetson_temp_source != zone_type:
             self.jetson_temp_source = zone_type
-            self.get_logger().info(f"Jetson temperature source: {zone_type}")
+            pass
 
         return temp_c
 
@@ -2046,7 +2014,7 @@ class SeanoLogger(Node):
                     f.write("5. system_metrics.csv\n")
                     f.write("6. mission/mission_readable.csv\n")
                     f.write("7. mission/mission_events_readable.log\n")
-                    f.write("8. video/\n")
+
             except Exception as e:
                 self.get_logger().error(f"Failed writing mission summary: {e}")
 
@@ -2067,7 +2035,6 @@ class SeanoLogger(Node):
         - IMU_Sync         : data IMU hasil sinkronisasi per sync_time
         - CTD_Sync         : data CTD hasil sinkronisasi per sync_time
         - ADCP_Sync        : data ADCP hasil sinkronisasi per sync_time
-        - SBES_Sync        : data SBES hasil sinkronisasi per sync_time
         - Battery_Sync     : data baterai hasil sinkronisasi per sync_time
         - Sync_Diagnostics : delay/status/stale/missing
         - Sync_Quality     : ringkasan kualitas sinkronisasi
@@ -2097,8 +2064,7 @@ class SeanoLogger(Node):
                     ("IMU_Sync", temp_sources[1][1] if len(temp_sources) > 1 else ""),
                     ("CTD_Sync", temp_sources[2][1] if len(temp_sources) > 2 else ""),
                     ("ADCP_Sync", temp_sources[3][1] if len(temp_sources) > 3 else ""),
-                    ("SBES_Sync", temp_sources[4][1] if len(temp_sources) > 4 else ""),
-                    ("Battery_Sync", temp_sources[5][1] if len(temp_sources) > 5 else ""),
+                    ("Battery_Sync", temp_sources[4][1] if len(temp_sources) > 4 else ""),
                     ("Sync_Diagnostics", diagnostics_csv),
                     ("Sync_Quality", quality_csv),
                 ]
@@ -2110,7 +2076,7 @@ class SeanoLogger(Node):
 
                 xlsx_path = os.path.join(sensor_dir, "synchronized_log.xlsx")
                 self.write_xlsx_from_csv_sources(xlsx_path, sources)
-                self.get_logger().info(f"Excel synchronized workbook created: {xlsx_path}")
+                pass
 
             except Exception as e:
                 self.get_logger().error(f"Failed creating Excel synchronized workbook: {e}")
@@ -2147,7 +2113,6 @@ class SeanoLogger(Node):
             "imu": "IMU_Sync",
             "ctd": "CTD_Sync",
             "adcp": "ADCP_Sync",
-            "sbes": "SBES_Sync",
             "battery": "Battery_Sync",
         }
 

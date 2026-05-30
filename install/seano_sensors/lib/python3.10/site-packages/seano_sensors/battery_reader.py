@@ -1,3 +1,28 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Battery Reader - Quiet Terminal
+===============================
+
+Input:
+    MQTT topic berisi data battery JSON.
+
+Publish:
+    /battery/state  (sensor_msgs/BatteryState)
+
+Terminal output:
+    BATTERY_READER: NOT READY
+    BATTERY_READER: READY
+
+READY berarti:
+    MQTT connected dan minimal satu data battery valid sudah diterima,
+    serta data belum stale.
+
+NOT READY berarti:
+    MQTT belum connected, belum ada data battery, disconnected,
+    atau data MQTT sudah stale.
+"""
+
 import json
 import math
 import time
@@ -11,61 +36,77 @@ from sensor_msgs.msg import BatteryState
 
 class BatteryMonitor(Node):
     def __init__(self):
-        super().__init__('battery_reader')
+        super().__init__("battery_reader")
 
-        # =========================
-        # MQTT CONFIG
-        # =========================
-        self.mqtt_broker = 'mqtt.seano.cloud'
-        self.mqtt_port = 8883
-        self.mqtt_username = 'seanomqtt'
-        self.mqtt_password = 'Seano2025*'
-        self.mqtt_battery_topic = 'seano/USV-001/battery'
+        # ============================================================
+        # PARAMETERS
+        # ============================================================
+        self.declare_parameter("mqtt_broker", "mqtt.seano.cloud")
+        self.declare_parameter("mqtt_port", 8883)
+        self.declare_parameter("mqtt_username", "seanomqtt")
+        self.declare_parameter("mqtt_password", "Seano2025*")
+        self.declare_parameter("mqtt_battery_topic", "seano/USV-001/battery")
 
-        # =========================
-        # ROS CONFIG
-        # =========================
-        self.ros_battery_topic = '/battery/state'
-        self.publish_rate_hz = 1.0
+        self.declare_parameter("ros_battery_topic", "/battery/state")
+        self.declare_parameter("publish_rate_hz", 1.0)
+        self.declare_parameter("stale_timeout_sec", 10.0)
+
+        self.mqtt_broker = str(self.get_parameter("mqtt_broker").value)
+        self.mqtt_port = int(self.get_parameter("mqtt_port").value)
+        self.mqtt_username = str(self.get_parameter("mqtt_username").value)
+        self.mqtt_password = str(self.get_parameter("mqtt_password").value)
+        self.mqtt_battery_topic = str(self.get_parameter("mqtt_battery_topic").value)
+
+        self.ros_battery_topic = str(self.get_parameter("ros_battery_topic").value)
+        self.publish_rate_hz = float(self.get_parameter("publish_rate_hz").value)
+        self.stale_timeout_sec = float(self.get_parameter("stale_timeout_sec").value)
+
+        if self.publish_rate_hz <= 0.0:
+            self.publish_rate_hz = 1.0
+
         self.publish_period = 1.0 / self.publish_rate_hz
 
+        # ============================================================
+        # ROS PUBLISHER
+        # ============================================================
         self.battery_pub = self.create_publisher(
             BatteryState,
             self.ros_battery_topic,
-            10
+            10,
         )
 
-        # =========================
-        # LATEST BATTERY DATA
-        # =========================
-        # MQTT hanya update variable ini.
-        # ROS publish dilakukan oleh timer 1 Hz.
+        # ============================================================
+        # STATE
+        # ============================================================
         self.latest_percentage = math.nan
         self.latest_voltage = math.nan
         self.latest_current = math.nan
         self.latest_mqtt_time = None
 
-        # Supaya terminal tidak spam
-        self.battery_data_received_logged = False
-        self.stale_data_warned = False
+        self.mqtt_connected = False
+        self.ready = False
+        self.last_status = None
 
-        # Timer publish ROS battery stabil 1 Hz
         self.create_timer(
             self.publish_period,
-            self.publish_battery_timer
+            self.publish_battery_timer,
         )
 
-        # =========================
-        # MQTT CLIENT SETUP
-        # =========================
+        self.create_timer(
+            1.0,
+            self.check_status,
+        )
+
+        # ============================================================
+        # MQTT CLIENT
+        # ============================================================
         self.mqtt_client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1)
 
         self.mqtt_client.username_pw_set(
             self.mqtt_username,
-            self.mqtt_password
+            self.mqtt_password,
         )
 
-        # Port 8883 menggunakan TLS
         self.mqtt_client.tls_set()
         self.mqtt_client.tls_insecure_set(True)
 
@@ -73,90 +114,90 @@ class BatteryMonitor(Node):
         self.mqtt_client.on_disconnect = self.on_mqtt_disconnect
         self.mqtt_client.on_message = self.on_mqtt_message
 
-        self.get_logger().info(
-            f'Connecting to MQTT broker {self.mqtt_broker}:{self.mqtt_port}'
-        )
+        self.set_ready(False)
 
         self.mqtt_client.connect_async(
             self.mqtt_broker,
             self.mqtt_port,
-            60
+            60,
         )
 
         self.mqtt_client.loop_start()
 
-        self.get_logger().info(
-            f'Battery reader started | MQTT {self.mqtt_battery_topic} '
-            f'-> ROS {self.ros_battery_topic} at {self.publish_rate_hz:.1f} Hz'
-        )
+    # ============================================================
+    # STATUS
+    # ============================================================
+    def set_ready(self, ready: bool):
+        if ready == self.ready and self.last_status is not None:
+            return
 
+        self.ready = ready
+        status = "READY" if ready else "NOT READY"
+
+        if status == self.last_status:
+            return
+
+        self.last_status = status
+        self.get_logger().info(f"BATTERY_READER: {status}")
+
+    def update_ready_state(self):
+        if not self.mqtt_connected:
+            self.set_ready(False)
+            return
+
+        if self.latest_mqtt_time is None:
+            self.set_ready(False)
+            return
+
+        data_age = time.time() - self.latest_mqtt_time
+
+        if data_age > self.stale_timeout_sec:
+            self.set_ready(False)
+            return
+
+        self.set_ready(True)
+
+    # ============================================================
+    # MQTT CALLBACKS
+    # ============================================================
     def on_mqtt_connect(self, client, userdata, flags, rc):
         if rc == 0:
-            self.get_logger().info('MQTT connected successfully')
-
+            self.mqtt_connected = True
             client.subscribe(self.mqtt_battery_topic)
-
-            self.get_logger().info(
-                f'Subscribed to MQTT topic: {self.mqtt_battery_topic}'
-            )
         else:
-            self.get_logger().error(
-                f'MQTT connection failed with return code: {rc}'
-            )
+            self.mqtt_connected = False
+
+        self.update_ready_state()
 
     def on_mqtt_disconnect(self, client, userdata, rc):
-        self.get_logger().warn(
-            f'MQTT disconnected with return code: {rc}'
-        )
+        self.mqtt_connected = False
+        self.update_ready_state()
 
     def on_mqtt_message(self, client, userdata, msg):
         try:
             payload = msg.payload.decode()
             data = json.loads(payload)
 
-            percentage = data.get('percentage', math.nan)
-            voltage = data.get('voltage', math.nan)
-            current = data.get('current', math.nan)
+            percentage = data.get("percentage", math.nan)
+            voltage = data.get("voltage", math.nan)
+            current = data.get("current", math.nan)
 
-            # Simpan data terakhir dari MQTT.
-            # Jangan langsung publish di sini agar ROS output tetap stabil 1 Hz.
             self.latest_percentage = self.normalize_percentage(percentage)
             self.latest_voltage = self.to_float_or_nan(voltage)
             self.latest_current = self.to_float_or_nan(current)
             self.latest_mqtt_time = time.time()
 
-            # Kalau data baru masuk lagi setelah stale, reset warning
-            self.stale_data_warned = False
+            self.update_ready_state()
 
-            # Print hanya sekali saat data pertama berhasil diterima
-            if not self.battery_data_received_logged:
-                self.get_logger().info(
-                    f'Battery data received from MQTT. '
-                    f'Publishing to {self.ros_battery_topic} at {self.publish_rate_hz:.1f} Hz'
-                )
-                self.battery_data_received_logged = True
+        except Exception:
+            self.set_ready(False)
 
-        except Exception as e:
-            self.get_logger().error(
-                f'Failed to parse MQTT battery message: {e}'
-            )
-
+    # ============================================================
+    # ROS PUBLISH
+    # ============================================================
     def publish_battery_timer(self):
-        # Jangan publish apa pun sebelum MQTT battery pertama diterima.
         if self.latest_mqtt_time is None:
             return
-
-        now = time.time()
-        data_age = now - self.latest_mqtt_time
-
-        # Kalau MQTT lama tidak update, tetap publish nilai terakhir
-        # agar logger tetap dapat 1 Hz, tapi kasih warning sekali.
-        if data_age > 10.0 and not self.stale_data_warned:
-            self.get_logger().warning(
-                f'Battery MQTT data is stale ({data_age:.1f}s old). '
-                'Republishing last known battery value.'
-            )
-            self.stale_data_warned = True
 
         battery_msg = BatteryState()
         battery_msg.header.stamp = self.get_clock().now().to_msg()
@@ -167,24 +208,30 @@ class BatteryMonitor(Node):
 
         self.battery_pub.publish(battery_msg)
 
-    def normalize_percentage(self, value):
+    def check_status(self):
+        self.update_ready_state()
+
+    # ============================================================
+    # CONVERSION
+    # ============================================================
+    @staticmethod
+    def normalize_percentage(value):
         if value is None:
             return math.nan
 
         try:
             percentage = float(value)
 
-            # Kalau input dari MQTT 0-100, ubah ke 0.0-1.0
             if percentage > 1.0:
                 return percentage / 100.0
 
-            # Kalau input sudah 0.0-1.0, langsung pakai
             return percentage
 
         except (TypeError, ValueError):
             return math.nan
 
-    def to_float_or_nan(self, value):
+    @staticmethod
+    def to_float_or_nan(value):
         if value is None:
             return math.nan
 
@@ -193,6 +240,9 @@ class BatteryMonitor(Node):
         except (TypeError, ValueError):
             return math.nan
 
+    # ============================================================
+    # SHUTDOWN
+    # ============================================================
     def destroy_node(self):
         try:
             self.mqtt_client.loop_stop()
@@ -212,10 +262,10 @@ def main(args=None):
         rclpy.spin(node)
     except KeyboardInterrupt:
         pass
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
 
-    node.destroy_node()
-    rclpy.shutdown()
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

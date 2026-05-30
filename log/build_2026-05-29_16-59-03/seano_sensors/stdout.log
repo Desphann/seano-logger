@@ -1,0 +1,33 @@
+running egg_info
+writing ../../build/seano_sensors/seano_sensors.egg-info/PKG-INFO
+writing dependency_links to ../../build/seano_sensors/seano_sensors.egg-info/dependency_links.txt
+writing entry points to ../../build/seano_sensors/seano_sensors.egg-info/entry_points.txt
+writing requirements to ../../build/seano_sensors/seano_sensors.egg-info/requires.txt
+writing top-level names to ../../build/seano_sensors/seano_sensors.egg-info/top_level.txt
+reading manifest file '../../build/seano_sensors/seano_sensors.egg-info/SOURCES.txt'
+writing manifest file '../../build/seano_sensors/seano_sensors.egg-info/SOURCES.txt'
+running build
+running build_py
+copying seano_sensors/gps_reader.py -> /home/seano/resource_git/seano-logger/build/seano_sensors/build/lib/seano_sensors
+copying seano_sensors/battery_reader.py -> /home/seano/resource_git/seano-logger/build/seano_sensors/build/lib/seano_sensors
+copying seano_sensors/imu_reader.py -> /home/seano/resource_git/seano-logger/build/seano_sensors/build/lib/seano_sensors
+copying seano_sensors/mission_state_reader_node.py -> /home/seano/resource_git/seano-logger/build/seano_sensors/build/lib/seano_sensors
+copying seano_sensors/video_logger_node.py -> /home/seano/resource_git/seano-logger/build/seano_sensors/build/lib/seano_sensors
+copying seano_sensors/ctd_adcp_reader.py -> /home/seano/resource_git/seano-logger/build/seano_sensors/build/lib/seano_sensors
+copying seano_sensors/__init__.py -> /home/seano/resource_git/seano-logger/build/seano_sensors/build/lib/seano_sensors
+running install
+running install_lib
+running install_data
+copying resource/seano_sensors -> /home/seano/resource_git/seano-logger/install/seano_sensors/share/ament_index/resource_index/packages
+copying package.xml -> /home/seano/resource_git/seano-logger/install/seano_sensors/share/seano_sensors
+running install_egg_info
+removing '/home/seano/resource_git/seano-logger/install/seano_sensors/lib/python3.10/site-packages/seano_sensors-0.0.0-py3.10.egg-info' (and everything under it)
+Copying ../../build/seano_sensors/seano_sensors.egg-info to /home/seano/resource_git/seano-logger/install/seano_sensors/lib/python3.10/site-packages/seano_sensors-0.0.0-py3.10.egg-info
+running install_scripts
+Installing battery_reader script to /home/seano/resource_git/seano-logger/install/seano_sensors/lib/seano_sensors
+Installing ctd_adcp_reader script to /home/seano/resource_git/seano-logger/install/seano_sensors/lib/seano_sensors
+Installing gps_reader script to /home/seano/resource_git/seano-logger/install/seano_sensors/lib/seano_sensors
+Installing imu_reader script to /home/seano/resource_git/seano-logger/install/seano_sensors/lib/seano_sensors
+Installing mission_state_reader_node script to /home/seano/resource_git/seano-logger/install/seano_sensors/lib/seano_sensors
+Installing video_logger_node script to /home/seano/resource_git/seano-logger/install/seano_sensors/lib/seano_sensors
+writing list of installed files to '/home/seano/resource_git/seano-logger/build/seano_sensors/install.log'

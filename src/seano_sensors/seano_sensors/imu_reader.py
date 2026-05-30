@@ -1,97 +1,100 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+IMU Reader - Quiet Terminal - Fixed QoS
+=======================================
+
+Subscribe:
+    /mavros/imu/data  (sensor_msgs/Imu)
+
+Terminal output:
+    IMU_READER: NOT READY
+    IMU_READER: READY
+
+READY berarti:
+    Pesan IMU dari MAVROS sudah diterima dan stream belum timeout.
+
+Perbaikan penting:
+    Subscriber memakai qos_profile_sensor_data supaya cocok dengan MAVROS
+    sensor topic yang umumnya BEST_EFFORT. Kalau memakai angka biasa 50,
+    ROS2 default-nya RELIABLE dan bisa QoS mismatch.
+"""
+
 import time
-from datetime import datetime, timezone
 
 import rclpy
 from rclpy.node import Node
+from rclpy.qos import qos_profile_sensor_data
 from sensor_msgs.msg import Imu
 
 
 class IMUReader(Node):
     def __init__(self):
-        super().__init__('imu_reader')
+        super().__init__("imu_reader")
 
-        self.declare_parameter('sample_rate', 1.0)
-        self.sample_rate = float(self.get_parameter('sample_rate').value)
+        self.declare_parameter("sample_rate", 1.0)
+        self.declare_parameter("topic", "/mavros/imu/data")
+        self.declare_parameter("timeout_sec", 5.0)
+
+        self.sample_rate = float(self.get_parameter("sample_rate").value)
+        self.topic = str(self.get_parameter("topic").value)
+        self.timeout_sec = float(self.get_parameter("timeout_sec").value)
+
+        if self.sample_rate <= 0.0:
+            self.sample_rate = 1.0
+
         self.min_period = 1.0 / self.sample_rate
-
-        self.timeout_sec = 5.0
 
         self.last_process_time = None
         self.last_msg_time = None
 
-        # Flag supaya terminal tidak spam
-        self.waiting_logged = False
-        self.first_data_logged = False
-        self.timeout_logged = False
-
-        self.is_connected = False
+        self.ready = False
+        self.last_status = None
 
         self.create_subscription(
             Imu,
-            '/mavros/imu/data',
+            self.topic,
             self.imu_callback,
-            50
+            qos_profile_sensor_data,
         )
 
         self.create_timer(1.0, self.check_status)
 
-        self.get_logger().info(
-            f"IMU Reader started | topic=/mavros/imu/data | sample_rate={self.sample_rate} Hz"
-        )
+        self.set_ready(False)
 
-        # Waiting info hanya sekali
-        self.get_logger().info("IMU status: waiting for first data...")
-        self.waiting_logged = True
+    def set_ready(self, ready: bool):
+        status = "READY" if ready else "NOT READY"
 
-    def convert_time(self, stamp):
-        sec = stamp.sec
-        nanosec = stamp.nanosec
+        if status == self.last_status:
+            return
 
-        if sec == 0 and nanosec == 0:
-            return datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
-
-        dt = datetime.fromtimestamp(sec, tz=timezone.utc)
-        return dt.strftime("%Y-%m-%d %H:%M:%S") + f".{int(nanosec / 1e6):03d}"
+        self.ready = ready
+        self.last_status = status
+        self.get_logger().info(f"IMU_READER: {status}")
 
     def imu_callback(self, msg):
         now = time.time()
         self.last_msg_time = now
 
-        # Batasi proses internal sesuai sample_rate
+        # READY harus berdasarkan stream masuk, bukan sample-rate processing.
+        self.set_ready(True)
+
+        # Sample-rate gate tetap dipertahankan jika nanti ada proses internal.
         if self.last_process_time is not None:
             if (now - self.last_process_time) < self.min_period:
                 return
 
         self.last_process_time = now
-        self.is_connected = True
-
-        # Print hanya sekali saat data pertama berhasil diterima
-        if not self.first_data_logged:
-            timestamp = self.convert_time(msg.header.stamp)
-            self.get_logger().info(
-                f"IMU data received from /mavros/imu/data at {timestamp}"
-            )
-            self.first_data_logged = True
-            self.timeout_logged = False
-
-        # Setelah ini tidak ada log lagi untuk setiap data IMU.
-        # Data tetap diterima oleh node, hanya terminal tidak spam.
 
     def check_status(self):
-        now = time.time()
-
-        # Kalau belum pernah ada data, jangan print berulang-ulang
         if self.last_msg_time is None:
+            self.set_ready(False)
             return
 
-        # Timeout hanya dilaporkan sekali
-        if (now - self.last_msg_time) > self.timeout_sec:
-            if not self.timeout_logged:
-                self.get_logger().error(
-                    "IMU timeout | no data received in the last 5 seconds"
-                )
-                self.timeout_logged = True
-                self.is_connected = False
+        age = time.time() - self.last_msg_time
+
+        if age > self.timeout_sec:
+            self.set_ready(False)
 
 
 def main(args=None):
@@ -103,10 +106,10 @@ def main(args=None):
         rclpy.spin(node)
     except KeyboardInterrupt:
         pass
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
 
-    node.destroy_node()
-    rclpy.shutdown()
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

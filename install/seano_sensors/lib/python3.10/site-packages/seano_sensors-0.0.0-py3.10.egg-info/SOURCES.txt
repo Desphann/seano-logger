@@ -10,13 +10,11 @@ setup.py
 ../../build/seano_sensors/seano_sensors.egg-info/zip-safe
 resource/seano_sensors
 seano_sensors/__init__.py
-seano_sensors/adcp_reader.py
 seano_sensors/battery_reader.py
-seano_sensors/ctd_reader.py
+seano_sensors/ctd_adcp_reader.py
 seano_sensors/gps_reader.py
 seano_sensors/imu_reader.py
 seano_sensors/mission_state_reader_node.py
-seano_sensors/sbes_reader.py
 seano_sensors/video_logger_node.py
 test/test_copyright.py
 test/test_flake8.py

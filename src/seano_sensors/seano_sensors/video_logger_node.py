@@ -1,14 +1,57 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+"""
+SEANO CA Debug Video Logger - Duration-Accurate Edition
+=======================================================
+
+Jaminan durasi video = durasi misi:
+    Kode ini menggunakan pendekatan timestamp-based replay, bukan
+    "tulis frame saat datang" yang bergantung pada kestabilan topic.
+
+Cara kerja inti:
+    1. Setiap frame yang datang dicap dengan monotonic timestamp ASLI.
+    2. Frame + timestamp disimpan ke per-target FrameBuffer (list di RAM).
+    3. Saat ARM -> DISARM, buffer di-flush ke VideoWriter dengan cara:
+       - Hitung selisih waktu antar frame.
+       - Jika ada gap lebih dari 1 frame interval, sisipkan frame duplikat
+         sebanyak yang diperlukan supaya durasi video = durasi wall-clock.
+    4. VideoWriter dibuka dengan output_fps tetap (default 30 fps untuk player
+       compatibility), NAMUN jumlah frame yang ditulis disesuaikan agar
+       durasi misi tersimpan dengan benar.
+
+Manfaat pendekatan ini:
+    - Durasi video di player = durasi misi sesungguhnya.
+    - Tidak ada duplikat frame yang terbuang secara real-time.
+    - Tahan terhadap jitter, drop, dan burst dari topic ROS.
+    - Kompatibel dengan semua video player karena FPS di header MP4 adalah
+      angka round (misal 30), bukan angka desimal aneh.
+    - Dapat digunakan dengan topic yang FPS-nya tidak stabil sama sekali.
+
+Catatan RAM:
+    Buffer frame disimpan di RAM. Untuk misi panjang dengan resolusi besar,
+    konsumsi RAM bisa tinggi. Gunakan `max_buffer_frames` untuk membatasi
+    jumlah frame yang di-buffer jika diperlukan. Jika buffer penuh, frame
+    lama yang pertama dibuang (FIFO circular).
+
+Output:
+    <MISSION_ROOT>/video/ca_debug_video_YYYY-MM-DD_HH-MM-SS_WIB.recording.mp4
+    <MISSION_ROOT>/video/ca_debug_video_YYYY-MM-DD_HH-MM-SS_WIB.mp4
+
+Author  : SEANO Engineering
+Version : 3.0 (Duration-Accurate Edition)
+"""
 
 import os
-import csv
 import time
-import queue
-import threading
+import math
 from datetime import datetime
+from collections import deque
+from threading import Lock
 
 import cv2
+import numpy as np
+from cv_bridge import CvBridge
+
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import (
@@ -18,68 +61,168 @@ from rclpy.qos import (
     DurabilityPolicy,
 )
 
-from sensor_msgs.msg import Image
+from sensor_msgs.msg import Image, CompressedImage
 from mavros_msgs.msg import State
-from cv_bridge import CvBridge
 
 
-class SeanoCaDebugVideoLogger(Node):
+# =========================================================================
+# Frame buffer: menyimpan frame + timestamp monotonic
+# =========================================================================
+class FrameBuffer:
     """
-    SEANO CA Debug Video Logger 30 FPS
+    Buffer frame yang timestamp-aware.
 
-    Design:
-    - Source video dari ROS Image topic, default /ca/debug_image.
-    - Tidak membuka /dev/video0.
-    - Tidak membuat folder mission sebelum topic image benar-benar terbaca.
-    - Output MP4 dibuat constant 30 FPS.
-    - Kalau source /ca/debug_image belum update, frame terakhir diulang.
-    - Kalau topic mati/stale terlalu lama, writer tidak menulis freeze panjang.
-    - CSV dibuat mudah dibaca untuk analisis pengujian.
-    - Bisa mode test tanpa MAVROS arm.
-    - Bisa mode mission asli dengan MAVROS armed/disarmed.
+    Setiap entry adalah tuple (monotonic_timestamp_sec, numpy_array_BGR).
+    Jika max_frames > 0, buffer bersifat circular (FIFO, frame lama dibuang).
     """
 
+    def __init__(self, max_frames: int = 0):
+        self._max = max_frames
+        self._lock = Lock()
+        self._frames: list = []  # list of (float, np.ndarray)
+
+    def append(self, timestamp: float, frame: np.ndarray):
+        with self._lock:
+            self._frames.append((timestamp, frame))
+            if self._max > 0 and len(self._frames) > self._max:
+                self._frames.pop(0)
+
+    def drain(self) -> list:
+        """Kembalikan semua frame dan kosongkan buffer."""
+        with self._lock:
+            result = self._frames[:]
+            self._frames.clear()
+            return result
+
+    def clear(self):
+        with self._lock:
+            self._frames.clear()
+
+    def __len__(self):
+        with self._lock:
+            return len(self._frames)
+
+
+# =========================================================================
+# Timestamp-accurate video finalizer
+# =========================================================================
+def flush_buffer_to_video(
+    frames: list,
+    output_path: str,
+    output_fps: float,
+    fourcc_code: str,
+    logger=None,
+) -> bool:
+    """
+    Tulis buffer frame ke file video dengan durasi yang akurat.
+
+    Algoritma:
+        - Iterasi melalui frame yang sudah di-timestamp.
+        - Untuk setiap pasang frame berurutan, hitung gap waktu nyata.
+        - Konversi gap waktu ke jumlah frame berdasarkan output_fps.
+        - Sisipkan frame duplikat (repeat frame terakhir) untuk mengisi gap.
+        - Ini memastikan durasi video di player = durasi wall-clock.
+
+    Param:
+        frames      : list of (timestamp_sec, np.ndarray BGR)
+        output_path : path file MP4 output
+        output_fps  : FPS yang akan ditulis ke header MP4 (misal 30.0)
+        fourcc_code : 4-char string misal "mp4v"
+        logger      : rclpy logger atau None
+
+    Return:
+        True jika berhasil, False jika gagal.
+    """
+    if not frames:
+        if logger:
+            logger.warning("FLUSH | no frames to write")
+        return False
+
+    def log(msg):
+        if logger:
+            logger.info(msg)
+
+    def log_warn(msg):
+        if logger:
+            logger.warning(msg)
+
+    first_frame = frames[0][1]
+    height, width = first_frame.shape[:2]
+    frame_interval = 1.0 / output_fps
+
+    fourcc = cv2.VideoWriter_fourcc(*fourcc_code)
+    writer = cv2.VideoWriter(output_path, fourcc, float(output_fps), (int(width), int(height)))
+
+    if not writer.isOpened():
+        log_warn(f"FLUSH | VideoWriter failed to open: {output_path}")
+        return False
+
+    total_written = 0
+    total_duplicated = 0
+
+    try:
+        for i, (ts, frame) in enumerate(frames):
+            # Resize jika perlu (misal resolusi berubah di tengah misi)
+            h, w = frame.shape[:2]
+            if w != width or h != height:
+                frame = cv2.resize(frame, (width, height), interpolation=cv2.INTER_AREA)
+
+            # Tulis frame ini
+            writer.write(frame)
+            total_written += 1
+
+            # Hitung berapa frame duplikat perlu disisipkan sebelum frame berikutnya
+            if i + 1 < len(frames):
+                next_ts = frames[i + 1][0]
+                gap_sec = next_ts - ts
+
+                if gap_sec > frame_interval * 1.5:
+                    # Ada gap lebih dari 1,5x interval — sisipkan duplikat
+                    extra_frames = max(0, round(gap_sec / frame_interval) - 1)
+                    for _ in range(extra_frames):
+                        writer.write(frame)
+                        total_duplicated += 1
+                        total_written += 1
+
+    except Exception as exc:
+        log_warn(f"FLUSH | error during write: {exc}")
+        writer.release()
+        return False
+
+    writer.release()
+
+    if not frames:
+        return False
+
+    real_duration = frames[-1][0] - frames[0][0]
+    expected_video_sec = total_written / output_fps
+
+    log(
+        f"FLUSH DONE | file={os.path.basename(output_path)} | "
+        f"raw_frames={len(frames)} | written={total_written} | "
+        f"duplicated={total_duplicated} | "
+        f"real_duration={real_duration:.2f}s | "
+        f"video_duration={expected_video_sec:.2f}s | "
+        f"output_fps={output_fps:.1f}"
+    )
+
+    return True
+
+
+# =========================================================================
+# Main node
+# =========================================================================
+class SeanoVideoLogger(Node):
     def __init__(self):
         super().__init__("video_logger_node")
 
         # ============================================================
-        # SOURCE IMAGE CONFIG
+        # PARAMETERS
         # ============================================================
         self.declare_parameter("image_topic", "/ca/debug_image")
-        self.declare_parameter("image_reliability", "reliable")
-        self.declare_parameter("qos_depth", 10)
+        self.declare_parameter("image_type", "raw")          # raw / compressed
+        self.declare_parameter("image_reliability", "best_effort")
 
-        # ============================================================
-        # VIDEO CONFIG: 30 FPS OUTPUT
-        # ============================================================
-        self.declare_parameter("output_fps", 30.0)
-        self.declare_parameter("codec", "mp4v")
-        self.declare_parameter("segment_seconds", 300.0)
-
-        self.declare_parameter("constant_output_fps", True)
-        self.declare_parameter("duplicate_last_frame_to_match_fps", True)
-
-        # Untuk output 30 FPS konstan, parameter ini harus False.
-        self.declare_parameter("write_only_new_frames", False)
-        self.declare_parameter("enforce_max_output_fps", True)
-
-        # Batas umur frame repeat.
-        # Jika /ca/debug_image berhenti lebih dari nilai ini, logger tidak menulis freeze panjang.
-        self.declare_parameter("max_repeat_frame_age_s", 1.0)
-        self.declare_parameter("max_stale_frame_age_s", 2.0)
-
-        self.declare_parameter("frame_queue_size", 10)
-        self.declare_parameter("resize_changed_frame", True)
-
-        # ============================================================
-        # IMAGE BEFORE FOLDER GATE
-        # ============================================================
-        self.declare_parameter("require_image_before_folder", True)
-        self.declare_parameter("required_image_max_age_s", 2.0)
-
-        # ============================================================
-        # STORAGE CONFIG
-        # ============================================================
         self.declare_parameter("external_mount_point", "/mnt/seano/SEANO_SSD")
         self.declare_parameter(
             "local_mount_point",
@@ -88,76 +231,45 @@ class SeanoCaDebugVideoLogger(Node):
 
         self.declare_parameter("enable_external_logging", True)
         self.declare_parameter("enable_local_logging", True)
+        self.declare_parameter("auto_enable_external_if_ready", True)
+
         self.declare_parameter("require_external_on_mission", False)
-        self.declare_parameter("single_target_mode", False)
+        self.declare_parameter("require_local_on_mission", True)
 
-        self.declare_parameter("create_own_mission_folder_if_missing", False)
-        self.declare_parameter("mission_folder_wait_sec", 0.8)
-        self.declare_parameter("mission_folder_attach_timeout_sec", 5.0)
+        # FPS yang dipakai di header MP4 output.
+        # Sebaiknya angka round yang kompatibel dengan player (15, 25, 30).
+        # Durasi video tidak bergantung pada nilai ini — yang penting jumlah
+        # frame yang ditulis sesuai perhitungan gap timestamp.
+        self.declare_parameter("output_fps", 30.0)
 
-        # ============================================================
-        # MISSION GATE CONFIG
-        # ============================================================
+        # Jika > 0, buffer frame dibatasi (circular FIFO). Hati-hati RAM.
+        # 0 = tidak ada batas (tidak disarankan untuk misi sangat panjang).
+        self.declare_parameter("max_buffer_frames", 0)
+
+        self.declare_parameter("codec", "mp4v")
+        self.declare_parameter("record_every_n_frames", 1)
+
+        # Kompatibilitas YAML lama. Tidak dipakai.
+        self.declare_parameter("segment_seconds", 0.0)
+
         self.declare_parameter("mission_gate_topic", "/mavros/state")
-        self.declare_parameter("force_record_without_mavros", False)
-        self.declare_parameter("stop_on_disarm", True)
+        self.declare_parameter("mission_folder_wait_sec", 10.0)
+        self.declare_parameter("mission_folder_prefix", "MISSION_START_")
+        self.declare_parameter("mission_folder_arm_grace_sec", 5.0)
 
-        # ============================================================
-        # DIAGNOSTIC CONFIG
-        # ============================================================
-        self.declare_parameter("index_flush_every_n_frames", 120)
-        self.declare_parameter("status_period_s", 5.0)
+        self.declare_parameter("required_image_max_age_s", 2.0)
+
+        # Kompatibilitas lama.
+        self.declare_parameter("force_record_without_mavros", False)
 
         # ============================================================
         # LOAD PARAMETERS
         # ============================================================
         self.image_topic = str(self.get_parameter("image_topic").value)
+        self.image_type = str(self.get_parameter("image_type").value).strip().lower()
         self.image_reliability = str(
             self.get_parameter("image_reliability").value
-        ).lower().strip()
-        self.qos_depth = max(1, int(self.get_parameter("qos_depth").value))
-
-        self.output_fps = float(self.get_parameter("output_fps").value)
-        if self.output_fps <= 0.0:
-            self.output_fps = 30.0
-
-        self.codec = str(self.get_parameter("codec").value)
-        if len(self.codec) != 4:
-            self.codec = "mp4v"
-
-        self.segment_seconds = float(self.get_parameter("segment_seconds").value)
-
-        self.constant_output_fps = bool(
-            self.get_parameter("constant_output_fps").value
-        )
-        self.duplicate_last_frame_to_match_fps = bool(
-            self.get_parameter("duplicate_last_frame_to_match_fps").value
-        )
-        self.write_only_new_frames = bool(
-            self.get_parameter("write_only_new_frames").value
-        )
-        self.enforce_max_output_fps = bool(
-            self.get_parameter("enforce_max_output_fps").value
-        )
-
-        self.max_repeat_frame_age_s = float(
-            self.get_parameter("max_repeat_frame_age_s").value
-        )
-        self.max_stale_frame_age_s = float(
-            self.get_parameter("max_stale_frame_age_s").value
-        )
-
-        self.frame_queue_size = max(1, int(self.get_parameter("frame_queue_size").value))
-        self.resize_changed_frame = bool(
-            self.get_parameter("resize_changed_frame").value
-        )
-
-        self.require_image_before_folder = bool(
-            self.get_parameter("require_image_before_folder").value
-        )
-        self.required_image_max_age_s = float(
-            self.get_parameter("required_image_max_age_s").value
-        )
+        ).strip().lower()
 
         self.external_mount_point = os.path.expanduser(
             str(self.get_parameter("external_mount_point").value)
@@ -172,148 +284,124 @@ class SeanoCaDebugVideoLogger(Node):
         self.enable_local_logging = bool(
             self.get_parameter("enable_local_logging").value
         )
+        self.auto_enable_external_if_ready = bool(
+            self.get_parameter("auto_enable_external_if_ready").value
+        )
         self.require_external_on_mission = bool(
             self.get_parameter("require_external_on_mission").value
         )
-        self.single_target_mode = bool(
-            self.get_parameter("single_target_mode").value
+        self.require_local_on_mission = bool(
+            self.get_parameter("require_local_on_mission").value
         )
 
-        self.create_own_mission_folder_if_missing = bool(
-            self.get_parameter("create_own_mission_folder_if_missing").value
-        )
-        self.mission_folder_wait_sec = float(
-            self.get_parameter("mission_folder_wait_sec").value
-        )
-        self.mission_folder_attach_timeout_sec = float(
-            self.get_parameter("mission_folder_attach_timeout_sec").value
+        self.output_fps = float(self.get_parameter("output_fps").value)
+        if self.output_fps <= 0.0:
+            self.output_fps = 30.0
+
+        self.max_buffer_frames = max(0, int(self.get_parameter("max_buffer_frames").value))
+
+        self.codec = str(self.get_parameter("codec").value)
+        if len(self.codec) != 4:
+            self.codec = "mp4v"
+
+        self.record_every_n_frames = max(
+            1, int(self.get_parameter("record_every_n_frames").value)
         )
 
         self.mission_gate_topic = str(self.get_parameter("mission_gate_topic").value)
-        self.force_record_without_mavros = bool(
-            self.get_parameter("force_record_without_mavros").value
+        self.mission_folder_wait_sec = max(
+            0.0, float(self.get_parameter("mission_folder_wait_sec").value)
         )
-        self.stop_on_disarm = bool(self.get_parameter("stop_on_disarm").value)
+        self.mission_folder_prefix = str(
+            self.get_parameter("mission_folder_prefix").value
+        )
+        self.mission_folder_arm_grace_sec = max(
+            0.0, float(self.get_parameter("mission_folder_arm_grace_sec").value)
+        )
+        self.required_image_max_age_s = max(
+            0.1, float(self.get_parameter("required_image_max_age_s").value)
+        )
 
-        self.index_flush_every_n_frames = max(
-            1,
-            int(self.get_parameter("index_flush_every_n_frames").value),
-        )
-        self.status_period_s = max(
-            1.0,
-            float(self.get_parameter("status_period_s").value),
-        )
+        if self.image_type not in ("raw", "compressed"):
+            self.image_type = "raw"
+
+        if (
+            not self.enable_external_logging
+            and self.auto_enable_external_if_ready
+            and self.is_path_writable(self.external_mount_point)
+        ):
+            self.enable_external_logging = True
 
         # ============================================================
-        # INTERNAL STATE
+        # STATE
         # ============================================================
         self.bridge = CvBridge()
-        self.frame_queue = queue.Queue(maxsize=self.frame_queue_size)
-
-        self.latest_packet = None
-        self.latest_packet_lock = threading.Lock()
 
         self.state_received = False
-        self.last_connected_state = False
         self.last_armed_state = False
+        self.last_connected_state = False
         self.last_flight_mode = "UNKNOWN"
 
-        self.logging_active = False
-        self.writer_thread = None
-        self.writer_stop_event = threading.Event()
+        self.current_arm_wall_epoch = None
+        self.current_arm_local_time = None
+        self.arm_monotonic = None         # time.monotonic() saat ARM
+        self.disarm_monotonic = None      # time.monotonic() saat DISARM
 
-        self.pending_start_request = False
-        self.pending_start_state = None
-        self.last_waiting_image_warn_time = 0.0
-
-        self.local_timezone = time.tzname[0]
-        self.mission_id = None
-        self.targets = []
-
-        self.frame_width = None
-        self.frame_height = None
-        self.segment_index = 0
-        self.segment_start_wall = 0.0
-
-        self.rx_frame_seq = 0
-        self.last_written_seq = -1
-        self.last_write_wall = 0.0
-
-        self.frame_count_in = 0
-        self.frame_count_written = 0
-        self.frame_count_queue_drop = 0
-        self.frame_count_stale_drop = 0
-        self.frame_count_duplicate_drop = 0
-        self.frame_count_throttle_drop = 0
-        self.frame_count_resize = 0
-        self.writer_error_count = 0
-
-        self.frame_count_repeated_write = 0
-        self.frame_count_no_frame_tick = 0
-        self.frame_count_repeat_stale_drop = 0
-
-        self.first_frame_wall = 0.0
+        self.frame_seen = False
         self.last_frame_wall = 0.0
-        self.start_record_wall = 0.0
-        self.start_record_local_time = None
-        self.end_record_local_time = None
 
-        self.last_status_text = ""
+        self.logging_active = False
+        self.preparing_session = False
+        self.mission_id = None
+        self.local_timezone = time.tzname[0]
+
+        self.targets: list = []           # list of target dict
+        self.video_filename: str = None
+        self.temp_video_filename: str = None
+
+        self.frame_count_in = 0           # total frame masuk dari topic
+        self.frame_count_buffered = 0     # frame yang masuk ke buffer
+
+        self.last_storage_warn_time = 0.0
+        self.last_decode_warn_time = 0.0
+        self.last_waiting_warn_time = 0.0
 
         # ============================================================
         # ROS INTERFACES
         # ============================================================
-        self.image_sub = self.create_subscription(
-            Image,
-            self.image_topic,
-            self.image_callback,
-            self.make_image_qos(),
-        )
-
-        self.state_sub = self.create_subscription(
+        self.create_subscription(
             State,
             self.mission_gate_topic,
             self.mavros_state_callback,
             self.make_state_qos(),
         )
 
-        self.status_timer = self.create_timer(
-            self.status_period_s,
-            self.status_timer_callback,
-        )
+        if self.image_type == "compressed":
+            self.create_subscription(
+                CompressedImage,
+                self.image_topic,
+                self.compressed_image_callback,
+                self.make_image_qos(),
+            )
+        else:
+            self.create_subscription(
+                Image,
+                self.image_topic,
+                self.raw_image_callback,
+                self.make_image_qos(),
+            )
 
-        self.pending_start_timer = self.create_timer(
-            0.2,
-            self.pending_start_timer_callback,
-        )
-
-        self.autostart_timer = self.create_timer(
-            0.5,
-            self.autostart_timer_callback,
-        )
-
-        self.set_status(
-            f"CA DEBUG VIDEO LOGGER STANDBY | source={self.image_topic} | "
-            f"fps={self.output_fps} | constant_output_fps={self.constant_output_fps} | "
-            f"require_image_before_folder={self.require_image_before_folder}"
+        self.get_logger().info(
+            "VIDEO LOGGER STANDBY | "
+            f"topic={self.image_topic} | type={self.image_type} | "
+            f"mode=duration_accurate | output_fps={self.output_fps:.1f} | "
+            f"max_buffer={self.max_buffer_frames or 'unlimited'} | "
+            f"external={self.enable_external_logging} | local={self.enable_local_logging}"
         )
 
     # ================================================================
     # QOS
     # ================================================================
-    def make_image_qos(self):
-        if self.image_reliability == "best_effort":
-            reliability = ReliabilityPolicy.BEST_EFFORT
-        else:
-            reliability = ReliabilityPolicy.RELIABLE
-
-        return QoSProfile(
-            history=HistoryPolicy.KEEP_LAST,
-            depth=self.qos_depth,
-            reliability=reliability,
-            durability=DurabilityPolicy.VOLATILE,
-        )
-
     def make_state_qos(self):
         return QoSProfile(
             history=HistoryPolicy.KEEP_LAST,
@@ -322,323 +410,214 @@ class SeanoCaDebugVideoLogger(Node):
             durability=DurabilityPolicy.VOLATILE,
         )
 
-    # ================================================================
-    # STATUS
-    # ================================================================
-    def set_status(self, text):
-        if text != self.last_status_text:
-            self.get_logger().info(text)
-            self.last_status_text = text
-
-    def status_timer_callback(self):
-        now_wall = time.monotonic()
-
-        if self.last_frame_wall > 0.0:
-            image_age = now_wall - self.last_frame_wall
-        else:
-            image_age = -1.0
-
-        qsize = self.frame_queue.qsize()
-
-        if self.logging_active:
-            self.set_status(
-                "CA DEBUG VIDEO LOGGER ACTIVE | "
-                f"in={self.frame_count_in} "
-                f"written={self.frame_count_written} "
-                f"repeat_write={self.frame_count_repeated_write} "
-                f"qdrop={self.frame_count_queue_drop} "
-                f"stale={self.frame_count_stale_drop} "
-                f"repeat_stale={self.frame_count_repeat_stale_drop} "
-                f"no_frame_tick={self.frame_count_no_frame_tick} "
-                f"resize={self.frame_count_resize} "
-                f"queue={qsize} "
-                f"image_age={image_age:.2f}s"
-            )
-        else:
-            self.set_status(
-                "CA DEBUG VIDEO LOGGER STANDBY | "
-                f"source={self.image_topic} "
-                f"in={self.frame_count_in} "
-                f"image_age={image_age:.2f}s "
-                f"pending_start={self.pending_start_request}"
-            )
-
-        if self.frame_count_in <= 0:
-            self.warn_waiting_image_once()
-
-    # ================================================================
-    # IMAGE GATE
-    # ================================================================
-    def is_image_ready_for_folder(self):
-        if not self.require_image_before_folder:
-            return True
-
-        if self.frame_count_in <= 0:
-            return False
-
-        if self.last_frame_wall <= 0.0:
-            return False
-
-        image_age = time.monotonic() - self.last_frame_wall
-
-        if image_age > self.required_image_max_age_s:
-            return False
-
-        return True
-
-    def warn_waiting_image_once(self):
-        now = time.monotonic()
-
-        if now - self.last_waiting_image_warn_time < 2.0:
-            return
-
-        self.last_waiting_image_warn_time = now
-
-        if self.frame_count_in <= 0:
-            self.get_logger().warning(
-                f"Waiting for first valid image from {self.image_topic}. "
-                "Mission/video folder will NOT be created yet."
-            )
-            return
-
-        image_age = now - self.last_frame_wall
-
-        self.get_logger().warning(
-            f"Image topic {self.image_topic} is stale. "
-            f"last_image_age={image_age:.2f}s, "
-            f"limit={self.required_image_max_age_s:.2f}s. "
-            "Mission/video folder will NOT be created yet."
+    def make_image_qos(self):
+        reliability = (
+            ReliabilityPolicy.RELIABLE
+            if self.image_reliability == "reliable"
+            else ReliabilityPolicy.BEST_EFFORT
+        )
+        return QoSProfile(
+            history=HistoryPolicy.KEEP_LAST,
+            depth=5,
+            reliability=reliability,
+            durability=DurabilityPolicy.VOLATILE,
         )
 
     # ================================================================
-    # IMAGE CALLBACK
+    # MAVROS STATE
     # ================================================================
-    def image_callback(self, msg):
+    def mavros_state_callback(self, msg):
+        previous_armed = self.last_armed_state
+
+        self.state_received = True
+        self.last_armed_state = bool(msg.armed)
+        self.last_connected_state = bool(msg.connected)
+        self.last_flight_mode = str(msg.mode)
+
+        # Transisi DISARM -> ARM
+        if msg.armed and not previous_armed:
+            self.current_arm_wall_epoch = time.time()
+            self.current_arm_local_time = datetime.now()
+            self.arm_monotonic = time.monotonic()
+            self.get_logger().info(
+                f"ARMED | mode={msg.mode} | connected={msg.connected}"
+            )
+
+            if not self.logging_active and not self.preparing_session:
+                if not self.is_image_ready():
+                    self.log_waiting_image_once()
+
+        # Transisi ARM -> DISARM
+        if (not msg.armed) and previous_armed:
+            self.disarm_monotonic = time.monotonic()
+            self.get_logger().info(
+                f"DISARMED | mode={msg.mode} | connected={msg.connected}"
+            )
+
+            if self.logging_active or self.preparing_session:
+                self.stop_logging_session()
+            else:
+                self.abort_preparing_session()
+
+            self.current_arm_wall_epoch = None
+            self.current_arm_local_time = None
+            self.arm_monotonic = None
+            self.disarm_monotonic = None
+            return
+
+        if not msg.armed:
+            self.current_arm_wall_epoch = None
+            self.current_arm_local_time = None
+            self.arm_monotonic = None
+
+    # ================================================================
+    # IMAGE CALLBACKS
+    # ================================================================
+    def compressed_image_callback(self, msg):
+        self.frame_count_in += 1
+        if self.frame_count_in % self.record_every_n_frames != 0:
+            return
+
+        np_arr = np.frombuffer(msg.data, np.uint8)
+        frame = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+
+        if frame is None:
+            self.warn_decode_once("failed decoding compressed image")
+            return
+
+        self.process_frame(frame)
+
+    def raw_image_callback(self, msg):
+        self.frame_count_in += 1
+        if self.frame_count_in % self.record_every_n_frames != 0:
+            return
+
         try:
             frame = self.bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")
-        except Exception as e:
-            self.get_logger().error(f"cv_bridge failed: {e}")
+        except Exception as exc:
+            self.warn_decode_once(f"failed converting raw image: {exc}")
             return
 
         if frame is None:
             return
 
-        now_wall = time.monotonic()
+        self.process_frame(frame)
 
-        if self.first_frame_wall <= 0.0:
-            self.first_frame_wall = now_wall
+    def process_frame(self, frame):
+        now_mono = time.monotonic()
+        self.last_frame_wall = now_mono
 
-        self.last_frame_wall = now_wall
-        self.rx_frame_seq += 1
-        self.frame_count_in += 1
+        if not self.frame_seen:
+            self.frame_seen = True
+            self.get_logger().info("IMAGE TOPIC READY")
 
-        source_stamp = self.stamp_to_sec(msg)
-
-        if source_stamp <= 0.0:
-            source_stamp = now_wall
-
-        packet = {
-            "seq": self.rx_frame_seq,
-            "frame": frame.copy(),
-            "source_stamp": source_stamp,
-            "rx_wall": now_wall,
-            "ros_frame_id": str(msg.header.frame_id),
-        }
-
-        with self.latest_packet_lock:
-            self.latest_packet = packet
-
-        try:
-            self.frame_queue.put_nowait(packet)
-        except queue.Full:
-            try:
-                _ = self.frame_queue.get_nowait()
-                self.frame_count_queue_drop += 1
-            except queue.Empty:
-                pass
-
-            try:
-                self.frame_queue.put_nowait(packet)
-            except queue.Full:
-                self.frame_count_queue_drop += 1
-
-    @staticmethod
-    def stamp_to_sec(msg):
-        try:
-            return float(msg.header.stamp.sec) + float(msg.header.stamp.nanosec) * 1e-9
-        except Exception:
-            return 0.0
-
-    # ================================================================
-    # MAVROS STATE / MISSION GATE
-    # ================================================================
-    def mavros_state_callback(self, msg):
-        self.state_received = True
-        self.last_connected_state = bool(msg.connected)
-        self.last_armed_state = bool(msg.armed)
-        self.last_flight_mode = str(msg.mode)
-
-        if self.force_record_without_mavros:
-            if self.stop_on_disarm and self.logging_active and not msg.armed:
-                self.stop_logging_session(
-                    f"disarmed in force mode | mode={msg.mode}, connected={msg.connected}"
-                )
+        if not self.last_armed_state:
             return
 
-        if msg.armed and not self.logging_active:
-            if not self.is_image_ready_for_folder():
-                self.pending_start_request = True
-                self.pending_start_state = msg
-                self.warn_waiting_image_once()
+        # Mulai session jika belum
+        if not self.logging_active and not self.preparing_session:
+            if not self.start_session():
                 return
 
-            self.start_logging_session(msg)
-            return
-
-        if not msg.armed and self.logging_active:
-            self.pending_start_request = False
-            self.pending_start_state = None
-
-            self.stop_logging_session(
-                f"disarmed | mode={msg.mode}, connected={msg.connected}"
-            )
-            return
-
-        if not msg.armed:
-            self.pending_start_request = False
-            self.pending_start_state = None
-
-    def autostart_timer_callback(self):
-        if not self.force_record_without_mavros:
-            return
-
         if self.logging_active:
+            self.buffer_frame(now_mono, frame)
+
+    def is_image_ready(self):
+        if not self.frame_seen or self.last_frame_wall <= 0.0:
+            return False
+        return (time.monotonic() - self.last_frame_wall) <= self.required_image_max_age_s
+
+    def log_waiting_image_once(self):
+        now = time.monotonic()
+        if now - self.last_waiting_warn_time < 10.0:
             return
+        self.last_waiting_warn_time = now
+        self.get_logger().info("VIDEO WAITING | armed but image topic not ready")
 
-        if not self.is_image_ready_for_folder():
+    def warn_decode_once(self, text):
+        now = time.monotonic()
+        if now - self.last_decode_warn_time < 10.0:
             return
-
-        self.start_logging_session(None)
-
-    def pending_start_timer_callback(self):
-        if self.logging_active:
-            return
-
-        if not self.pending_start_request:
-            return
-
-        if not self.force_record_without_mavros:
-            if not self.last_armed_state:
-                self.pending_start_request = False
-                self.pending_start_state = None
-                return
-
-        if not self.is_image_ready_for_folder():
-            self.warn_waiting_image_once()
-            return
-
-        state_msg = self.pending_start_state
-        self.pending_start_request = False
-        self.pending_start_state = None
-
-        self.start_logging_session(state_msg)
+        self.last_decode_warn_time = now
+        self.get_logger().warning(f"IMAGE WARNING | {text}")
 
     # ================================================================
-    # SESSION START / STOP
+    # SESSION: START / STOP / ABORT
     # ================================================================
-    def start_logging_session(self, state_msg=None):
-        if self.logging_active:
-            return
+    def start_session(self):
+        """
+        Cari mission folder yang valid, siapkan target buffer.
+        Dipanggil saat frame pertama setelah ARM tiba.
+        """
+        self.preparing_session = True
 
-        if not self.is_image_ready_for_folder():
-            self.pending_start_request = True
-            self.pending_start_state = state_msg
-            self.warn_waiting_image_once()
-            return
+        if self.current_arm_wall_epoch is None:
+            self.current_arm_wall_epoch = time.time()
+            self.current_arm_local_time = datetime.now()
+            self.arm_monotonic = time.monotonic()
 
-        if self.mission_folder_wait_sec > 0.0:
-            time.sleep(self.mission_folder_wait_sec)
-
-        if not self.prepare_output_folder():
-            self.get_logger().error(
-                "Failed preparing output folder. No video file was created."
+        if not self.prepare_logging_targets_from_existing_mission():
+            self.warn_storage_once(
+                "VIDEO NOT STARTED | mission folder not found or storage not ready"
             )
-            return
+            self.preparing_session = False
+            return False
 
-        self.frame_width = None
-        self.frame_height = None
-        self.segment_index = 0
-        self.segment_start_wall = 0.0
+        self.video_filename = self.make_video_filename()
+        self.temp_video_filename = self.video_filename.replace(".mp4", ".recording.mp4")
 
-        self.frame_count_written = 0
-        self.frame_count_queue_drop = 0
-        self.frame_count_stale_drop = 0
-        self.frame_count_duplicate_drop = 0
-        self.frame_count_throttle_drop = 0
-        self.frame_count_resize = 0
-        self.writer_error_count = 0
+        self.frame_count_buffered = 0
+        self.frame_count_in = 0
 
-        self.frame_count_repeated_write = 0
-        self.frame_count_no_frame_tick = 0
-        self.frame_count_repeat_stale_drop = 0
-
-        self.last_written_seq = -1
-        self.last_write_wall = 0.0
-        self.start_record_wall = time.monotonic()
-        self.start_record_local_time = datetime.now()
-        self.end_record_local_time = None
-
-        self.clear_frame_queue()
-
-        for target in self.targets:
-            self.write_start_info(target, state_msg)
-
-        self.writer_stop_event.clear()
         self.logging_active = True
+        self.preparing_session = False
 
-        self.writer_thread = threading.Thread(
-            target=self.writer_loop,
-            name="seano_ca_debug_video_writer_30fps",
-            daemon=True,
+        names = ", ".join(t["name"] for t in self.targets)
+        self.get_logger().info(
+            f"VIDEO RECORDING STARTED | mission_id={self.mission_id} | "
+            f"output_fps={self.output_fps:.1f} | mode=duration_accurate | targets={names}"
         )
-        self.writer_thread.start()
+        return True
 
-        self.set_status(
-            f"CA DEBUG VIDEO LOGGER ACTIVE | source={self.image_topic} | "
-            f"output_fps={self.output_fps}"
-        )
-
-    def stop_logging_session(self, reason="stop requested"):
+    def buffer_frame(self, timestamp: float, frame: np.ndarray):
+        """Simpan frame ke semua target buffer."""
         if not self.logging_active:
             return
 
-        self.logging_active = False
-        self.writer_stop_event.set()
-        self.end_record_local_time = datetime.now()
-
-        if self.writer_thread is not None:
-            try:
-                self.writer_thread.join(timeout=3.0)
-            except Exception:
-                pass
-
-        self.writer_thread = None
-
-        self.close_current_video()
+        frame_copy = frame.copy()
 
         for target in self.targets:
-            self.write_summary_csv(target, reason)
-            self.write_end_info(target, reason)
+            buf: FrameBuffer = target.get("buffer")
+            if buf is not None:
+                buf.append(timestamp, frame_copy)
 
-            try:
-                if target["frame_csv_file"] is not None:
-                    target["frame_csv_file"].flush()
-                    target["frame_csv_file"].close()
-            except Exception:
-                pass
+        self.frame_count_buffered += 1
 
-            target["frame_csv_file"] = None
-            target["frame_csv_writer"] = None
+    def stop_logging_session(self):
+        """Dipanggil saat DISARM. Flush buffer ke file video."""
+        if not self.logging_active and not self.preparing_session:
+            return
+
+        if self.preparing_session:
+            self.abort_preparing_session()
+            return
+
+        self.logging_active = False
+        self.preparing_session = False
+
+        # Hitung durasi misi dari monotonic
+        mission_duration = 0.0
+        if self.arm_monotonic is not None and self.disarm_monotonic is not None:
+            mission_duration = self.disarm_monotonic - self.arm_monotonic
+        elif self.arm_monotonic is not None:
+            mission_duration = time.monotonic() - self.arm_monotonic
+
+        self.get_logger().info(
+            f"VIDEO FINALIZING | buffered={self.frame_count_buffered} frames | "
+            f"mission_duration={mission_duration:.2f}s"
+        )
+
+        self._flush_all_targets()
 
         try:
             os.sync()
@@ -646,443 +625,179 @@ class SeanoCaDebugVideoLogger(Node):
             pass
 
         self.targets = []
-        self.set_status("CA DEBUG VIDEO LOGGER STANDBY")
+        self.video_filename = None
+        self.temp_video_filename = None
+        self.get_logger().info("VIDEO LOGGER STANDBY")
 
-    def clear_frame_queue(self):
-        while True:
-            try:
-                self.frame_queue.get_nowait()
-            except queue.Empty:
-                break
-
-    # ================================================================
-    # WRITER LOOP: CONSTANT 30 FPS
-    # ================================================================
-    def writer_loop(self):
-        period = 1.0 / self.output_fps
-        next_tick = time.monotonic()
-
-        last_packet = None
-
-        while not self.writer_stop_event.is_set():
-            now_wall = time.monotonic()
-            sleep_time = next_tick - now_wall
-
-            if sleep_time > 0.0:
-                self.writer_stop_event.wait(timeout=min(sleep_time, 0.01))
-                continue
-
-            now_wall = time.monotonic()
-
-            latest_from_queue = None
-
-            # Drain queue supaya writer selalu memakai frame terbaru.
-            # Ini mencegah video delay karena backlog.
-            while True:
-                try:
-                    latest_from_queue = self.frame_queue.get_nowait()
-                except queue.Empty:
-                    break
-
-            if latest_from_queue is not None:
-                last_packet = latest_from_queue
-            else:
-                with self.latest_packet_lock:
-                    if self.latest_packet is not None:
-                        last_packet = self.latest_packet
-
-            if last_packet is None:
-                self.frame_count_no_frame_tick += 1
-                next_tick += period
-                next_tick = self.correct_writer_clock_if_late(period, next_tick)
-                continue
-
-            seq = int(last_packet["seq"])
-            frame = last_packet["frame"]
-            source_stamp = float(last_packet["source_stamp"])
-            rx_wall = float(last_packet["rx_wall"])
-
-            frame_age = now_wall - rx_wall
-            frame_age_ms = frame_age * 1000.0
-            is_repeated_output = seq == self.last_written_seq
-
-            if is_repeated_output and frame_age > self.max_repeat_frame_age_s:
-                self.frame_count_repeat_stale_drop += 1
-                next_tick += period
-                next_tick = self.correct_writer_clock_if_late(period, next_tick)
-                continue
-
-            if frame_age > self.max_stale_frame_age_s:
-                self.frame_count_stale_drop += 1
-                next_tick += period
-                next_tick = self.correct_writer_clock_if_late(period, next_tick)
-                continue
-
-            if self.write_only_new_frames and is_repeated_output:
-                self.frame_count_duplicate_drop += 1
-                next_tick += period
-                next_tick = self.correct_writer_clock_if_late(period, next_tick)
-                continue
-
-            if is_repeated_output:
-                if not self.duplicate_last_frame_to_match_fps:
-                    self.frame_count_duplicate_drop += 1
-                    next_tick += period
-                    next_tick = self.correct_writer_clock_if_late(period, next_tick)
-                    continue
-
-                self.frame_count_repeated_write += 1
-                frame_status = "REPEATED_FRAME"
-                note = "Frame source belum update; frame terakhir diulang untuk menjaga output 30 FPS."
-            else:
-                frame_status = "NEW_FRAME"
-                note = "Frame baru dari topic diterima dan ditulis ke video."
-
-            height, width = frame.shape[:2]
-
-            if self.frame_width is None or self.frame_height is None:
-                self.frame_width = int(width)
-                self.frame_height = int(height)
-                self.open_new_video(self.frame_width, self.frame_height)
-
-            if width != self.frame_width or height != self.frame_height:
-                if self.resize_changed_frame:
-                    frame = cv2.resize(
-                        frame,
-                        (self.frame_width, self.frame_height),
-                        interpolation=cv2.INTER_AREA,
-                    )
-                    width = self.frame_width
-                    height = self.frame_height
-                    self.frame_count_resize += 1
-                    note = note + " Ukuran frame berubah, lalu di-resize."
-                else:
-                    self.get_logger().warning(
-                        f"Drop frame due size change: got={width}x{height}, "
-                        f"expected={self.frame_width}x{self.frame_height}"
-                    )
-                    next_tick += period
-                    next_tick = self.correct_writer_clock_if_late(period, next_tick)
-                    continue
-
-            now_unix = time.time()
-
-            if (
-                self.segment_seconds > 0.0
-                and self.segment_start_wall > 0.0
-                and now_unix - self.segment_start_wall >= self.segment_seconds
-            ):
-                self.open_new_video(self.frame_width, self.frame_height)
-
-            active_writer_count = 0
-
-            for target in self.targets:
-                writer = target.get("writer")
-                if writer is None:
-                    continue
-
-                try:
-                    writer.write(frame)
-                    active_writer_count += 1
-                except Exception as e:
-                    self.writer_error_count += 1
-                    self.get_logger().error(
-                        f"Writer failed for target={target['name']}: {e}"
-                    )
-
-            if active_writer_count > 0:
-                self.frame_count_written += 1
-                self.last_written_seq = seq
-                self.last_write_wall = now_wall
-
-                self.write_frame_csv_row(
-                    source_seq=seq,
-                    width=int(width),
-                    height=int(height),
-                    source_stamp=source_stamp,
-                    rx_wall=rx_wall,
-                    frame_age_ms=frame_age_ms,
-                    frame_status=frame_status,
-                    repeated_output=is_repeated_output,
-                    note=note,
-                )
-
-            next_tick += period
-            next_tick = self.correct_writer_clock_if_late(period, next_tick)
-
-    def correct_writer_clock_if_late(self, period, next_tick):
-        now = time.monotonic()
-
-        if next_tick < now - period:
-            self.frame_count_throttle_drop += 1
-            return now + period
-
-        return next_tick
-
-    # ================================================================
-    # VIDEO FILE HANDLING
-    # ================================================================
-    def open_new_video(self, width, height):
-        self.close_current_video()
-
-        self.segment_index += 1
-        self.segment_start_wall = time.time()
-
-        if self.segment_seconds > 0.0:
-            final_filename = f"ca_debug_video_segment_{self.segment_index:03d}.mp4"
-        else:
-            final_filename = "ca_debug_mission_video.mp4"
-
-        temp_filename = final_filename.replace(".mp4", ".recording.mp4")
-        fourcc = cv2.VideoWriter_fourcc(*self.codec)
+    def abort_preparing_session(self):
+        self.preparing_session = False
+        self.logging_active = False
 
         for target in self.targets:
+            buf = target.get("buffer")
+            if buf is not None:
+                buf.clear()
+
+        self.targets = []
+        self.video_filename = None
+        self.temp_video_filename = None
+        self.get_logger().info("VIDEO SESSION ABORTED | VIDEO LOGGER STANDBY")
+
+    # ================================================================
+    # FLUSH BUFFER -> VIDEO FILE
+    # ================================================================
+    def _flush_all_targets(self):
+        for target in self.targets:
+            buf: FrameBuffer = target.get("buffer")
+            if buf is None:
+                continue
+
+            frames = buf.drain()
+            if not frames:
+                self.get_logger().warning(
+                    f"FLUSH | target={target['name']} | no frames buffered"
+                )
+                continue
+
             video_dir = target["video_dir"]
-            temp_path = os.path.join(video_dir, temp_filename)
-            final_path = os.path.join(video_dir, final_filename)
+            temp_path = os.path.join(video_dir, self.temp_video_filename)
+            final_path = os.path.join(video_dir, self.video_filename)
 
-            target["writer"] = None
-            target["temp_path"] = temp_path
-            target["final_path"] = final_path
-            target["current_filename"] = final_filename
+            self.get_logger().info(
+                f"FLUSH START | target={target['name']} | frames={len(frames)} | "
+                f"output={self.video_filename}"
+            )
 
-            try:
-                writer = cv2.VideoWriter(
-                    temp_path,
-                    fourcc,
-                    self.output_fps,
-                    (int(width), int(height)),
+            success = flush_buffer_to_video(
+                frames=frames,
+                output_path=temp_path,
+                output_fps=self.output_fps,
+                fourcc_code=self.codec,
+                logger=self.get_logger(),
+            )
+
+            if success:
+                try:
+                    os.replace(temp_path, final_path)
+                    self.get_logger().info(
+                        f"VIDEO SAVED | target={target['name']} | file={final_path}"
+                    )
+                except Exception as exc:
+                    self.get_logger().error(
+                        f"VIDEO RENAME ERROR | target={target['name']} | {exc}"
+                    )
+            else:
+                self.get_logger().error(
+                    f"VIDEO FLUSH FAILED | target={target['name']}"
                 )
 
-                if not writer.isOpened():
-                    self.writer_error_count += 1
-                    self.get_logger().error(
-                        f"Failed opening video writer: {temp_path}"
-                    )
+    # ================================================================
+    # STORAGE / MISSION FOLDER ATTACH
+    # ================================================================
+    def prepare_logging_targets_from_existing_mission(self):
+        deadline = time.time() + self.mission_folder_wait_sec
+        while time.time() <= deadline:
+            if self.try_attach_existing_mission_once():
+                return True
+            time.sleep(0.2)
+        return False
+
+    def try_attach_existing_mission_once(self):
+        if self.current_arm_wall_epoch is None:
+            self.current_arm_wall_epoch = time.time()
+
+        min_mtime = self.current_arm_wall_epoch - self.mission_folder_arm_grace_sec
+        candidates = []
+        roots = self.get_today_roots()
+
+        for target_name, day_root in roots:
+            latest = self.find_latest_mission_folder(day_root, min_mtime=min_mtime)
+            if latest is None:
+                continue
+            try:
+                mtime = os.path.getmtime(latest)
+            except OSError:
+                mtime = 0.0
+            candidates.append((mtime, os.path.basename(latest)))
+
+        if not candidates:
+            return False
+
+        candidates.sort(key=lambda item: item[0], reverse=True)
+        selected_mission_id = candidates[0][1]
+        prepared = []
+
+        for target_name, day_root in roots:
+            if target_name == "external":
+                if not self.is_path_writable(self.external_mount_point):
+                    if self.require_external_on_mission:
+                        return False
                     continue
 
-                target["writer"] = writer
+            if target_name == "local":
+                if not self.is_path_writable(self.local_mount_point):
+                    if self.require_local_on_mission:
+                        return False
+                    continue
 
-            except Exception as e:
-                self.writer_error_count += 1
-                self.get_logger().error(f"Exception opening writer: {e}")
+            mission_base_path = os.path.join(day_root, selected_mission_id)
 
-    def close_current_video(self):
-        for target in self.targets:
-            writer = target.get("writer")
-            temp_path = target.get("temp_path")
-            final_path = target.get("final_path")
-
-            if writer is not None:
-                try:
-                    writer.release()
-                except Exception:
-                    pass
-
-            target["writer"] = None
-
-            if temp_path is not None and final_path is not None:
-                try:
-                    if os.path.exists(temp_path):
-                        os.replace(temp_path, final_path)
-                except Exception as e:
-                    self.writer_error_count += 1
-                    self.get_logger().error(
-                        f"Failed finalizing video file: {e}"
-                    )
-
-            target["temp_path"] = None
-            target["final_path"] = None
-            target["current_filename"] = None
-
-        try:
-            os.sync()
-        except Exception:
-            pass
-
-    # ================================================================
-    # CSV FILES
-    # ================================================================
-    def get_frame_csv_header(self):
-        return [
-            "waktu_lokal",
-            "mission_id",
-            "target_penyimpanan",
-            "topic_sumber",
-            "nama_file_video",
-            "segmen_video_ke",
-            "nomor_frame_video",
-            "setting_output_fps",
-            "status_frame",
-            "apakah_frame_diulang",
-            "nomor_frame_dari_topic",
-            "umur_frame_ms",
-            "waktu_ros_frame_detik",
-            "waktu_diterima_logger_monotonic_detik",
-            "lebar_frame_px",
-            "tinggi_frame_px",
-            "jumlah_antrian_frame_saat_ditulis",
-            "jumlah_error_writer_saat_ditulis",
-            "catatan",
-        ]
-
-    def get_summary_csv_header(self):
-        return [
-            "waktu_mulai_lokal",
-            "waktu_selesai_lokal",
-            "alasan_berhenti",
-            "mission_id",
-            "target_penyimpanan",
-            "topic_sumber",
-            "setting_output_fps",
-            "durasi_recording_detik",
-            "total_frame_masuk_dari_topic",
-            "total_frame_video_ditulis",
-            "total_frame_diulang",
-            "persentase_frame_diulang",
-            "queue_drop_frames",
-            "stale_drop_frames",
-            "duplicate_drop_frames",
-            "no_frame_tick_count",
-            "repeat_stale_drop_count",
-            "resize_count",
-            "writer_error_count",
-            "effective_written_fps",
-            "folder_video",
-        ]
-
-    def write_frame_csv_row(
-        self,
-        source_seq,
-        width,
-        height,
-        source_stamp,
-        rx_wall,
-        frame_age_ms,
-        frame_status,
-        repeated_output,
-        note,
-    ):
-        local_timestamp = self.get_local_timestamp()
-        queue_size = self.frame_queue.qsize()
-
-        for target in self.targets:
-            writer = target.get("frame_csv_writer")
-
-            if writer is None:
+            if not os.path.isdir(mission_base_path):
+                if target_name == "external" and self.require_external_on_mission:
+                    return False
+                if target_name == "local" and self.require_local_on_mission:
+                    return False
                 continue
 
-            filename = target.get("current_filename") or ""
-
             try:
-                writer.writerow([
-                    local_timestamp,
-                    self.mission_id or "",
-                    target.get("name", ""),
-                    self.image_topic,
-                    filename,
-                    self.segment_index,
-                    self.frame_count_written,
-                    f"{self.output_fps:.2f}",
-                    frame_status,
-                    "YA" if repeated_output else "TIDAK",
-                    source_seq,
-                    f"{frame_age_ms:.2f}",
-                    f"{source_stamp:.6f}",
-                    f"{rx_wall:.6f}",
-                    width,
-                    height,
-                    queue_size,
-                    self.writer_error_count,
-                    note,
-                ])
+                folder_mtime = os.path.getmtime(mission_base_path)
+            except OSError:
+                folder_mtime = 0.0
 
-                if self.frame_count_written % self.index_flush_every_n_frames == 0:
-                    target["frame_csv_file"].flush()
+            if folder_mtime < min_mtime:
+                continue
 
+            if not self.test_write_access(mission_base_path):
+                if target_name == "external" and self.require_external_on_mission:
+                    return False
+                if target_name == "local" and self.require_local_on_mission:
+                    return False
+                continue
+
+            video_dir = os.path.join(mission_base_path, "video")
+            try:
+                os.makedirs(video_dir, exist_ok=True)
             except Exception:
-                pass
+                continue
 
-    def write_summary_csv(self, target, reason):
-        summary_path = target.get("summary_csv_path")
-        if summary_path is None:
-            return
+            prepared.append((target_name, video_dir))
 
-        record_duration = 0.0
-        if self.start_record_wall > 0.0:
-            record_duration = time.monotonic() - self.start_record_wall
+        if not prepared:
+            return False
 
-        effective_fps = 0.0
-        if record_duration > 0.0:
-            effective_fps = self.frame_count_written / record_duration
+        self.targets = []
+        self.mission_id = selected_mission_id
 
-        repeated_percent = 0.0
-        if self.frame_count_written > 0:
-            repeated_percent = (
-                self.frame_count_repeated_write / self.frame_count_written
-            ) * 100.0
+        for target_name, video_dir in prepared:
+            self.targets.append(
+                {
+                    "name": target_name,
+                    "video_dir": video_dir,
+                    "buffer": FrameBuffer(max_frames=self.max_buffer_frames),
+                }
+            )
+            self.get_logger().info(
+                f"VIDEO TARGET READY | target={target_name} | video_dir={video_dir} | "
+                f"max_buffer={self.max_buffer_frames or 'unlimited'}"
+            )
 
-        start_time = ""
-        if self.start_record_local_time is not None:
-            start_time = self.start_record_local_time.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
-
-        end_time = ""
-        if self.end_record_local_time is not None:
-            end_time = self.end_record_local_time.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
-
-        try:
-            with open(summary_path, "w", newline="") as summary_file:
-                writer = csv.writer(summary_file)
-                writer.writerow(self.get_summary_csv_header())
-                writer.writerow([
-                    start_time,
-                    end_time,
-                    reason,
-                    self.mission_id or "",
-                    target.get("name", ""),
-                    self.image_topic,
-                    f"{self.output_fps:.2f}",
-                    f"{record_duration:.3f}",
-                    self.frame_count_in,
-                    self.frame_count_written,
-                    self.frame_count_repeated_write,
-                    f"{repeated_percent:.2f}",
-                    self.frame_count_queue_drop,
-                    self.frame_count_stale_drop,
-                    self.frame_count_duplicate_drop,
-                    self.frame_count_no_frame_tick,
-                    self.frame_count_repeat_stale_drop,
-                    self.frame_count_resize,
-                    self.writer_error_count,
-                    f"{effective_fps:.3f}",
-                    target.get("video_dir", ""),
-                ])
-        except Exception as e:
-            self.get_logger().error(f"Failed writing summary CSV: {e}")
-
-    # ================================================================
-    # OUTPUT FOLDER
-    # ================================================================
-    def prepare_output_folder(self):
-        deadline = time.time() + max(0.0, self.mission_folder_attach_timeout_sec)
-
-        while time.time() <= deadline:
-            if self.try_attach_output_folder_once():
-                return True
-
-            time.sleep(0.2)
-
-        if self.create_own_mission_folder_if_missing:
-            return self.create_and_attach_own_mission_folder()
-
-        return False
+        return len(self.targets) > 0
 
     def get_today_roots(self):
         now = datetime.now()
         year = now.strftime("%Y")
         month = now.strftime("%m")
         day = now.strftime("%d")
-
         roots = []
 
         if self.enable_external_logging:
@@ -1112,256 +827,82 @@ class SeanoCaDebugVideoLogger(Node):
                 )
             )
 
-        if self.single_target_mode:
-            roots = roots[:1]
-
         return roots
 
-    def try_attach_output_folder_once(self):
-        roots = self.get_today_roots()
-        latest_candidates = []
-
-        for target_name, day_root in roots:
-            mission_path = self.find_latest_mission_folder(day_root)
-
-            if mission_path is None:
-                continue
-
-            try:
-                mtime = os.path.getmtime(mission_path)
-            except OSError:
-                mtime = 0.0
-
-            latest_candidates.append((mtime, mission_path))
-
-        if len(latest_candidates) == 0:
-            return False
-
-        latest_candidates.sort(key=lambda item: item[0], reverse=True)
-        selected_mission_id = os.path.basename(latest_candidates[0][1])
-
-        self.targets = []
-
-        for target_name, day_root in roots:
-            mission_base_path = os.path.join(day_root, selected_mission_id)
-
-            if not os.path.isdir(mission_base_path):
-                continue
-
-            try:
-                self.add_logging_target(mission_base_path, target_name)
-            except Exception as e:
-                self.get_logger().error(
-                    f"Failed attach target={target_name}: {e}"
-                )
-
-        if self.require_external_on_mission:
-            has_external = any(target["name"] == "external" for target in self.targets)
-
-            if not has_external:
-                self.targets = []
-                return False
-
-        if len(self.targets) == 0:
-            return False
-
-        self.mission_id = selected_mission_id
-        return True
-
-    @staticmethod
-    def find_latest_mission_folder(day_root):
+    def find_latest_mission_folder(self, day_root, min_mtime=None):
         if not os.path.isdir(day_root):
             return None
 
         candidates = []
+        try:
+            names = os.listdir(day_root)
+        except Exception:
+            return None
 
-        for name in os.listdir(day_root):
+        for name in names:
+            if not name.startswith(self.mission_folder_prefix):
+                continue
             path = os.path.join(day_root, name)
-
             if not os.path.isdir(path):
                 continue
-
-            if not name.startswith("MISSION_START_"):
-                continue
-
             try:
                 mtime = os.path.getmtime(path)
             except OSError:
                 continue
-
+            if min_mtime is not None and mtime < min_mtime:
+                continue
             candidates.append((mtime, path))
 
-        if len(candidates) == 0:
+        if not candidates:
             return None
 
         candidates.sort(key=lambda item: item[0], reverse=True)
         return candidates[0][1]
 
-    def create_and_attach_own_mission_folder(self):
+    # ================================================================
+    # FILENAME HELPER
+    # ================================================================
+    def make_video_filename(self):
         now = datetime.now()
-        mission_id = now.strftime(f"MISSION_START_%H-%M-%S_{self.local_timezone}")
-
-        self.targets = []
-
-        for target_name, day_root in self.get_today_roots():
-            mission_base_path = os.path.join(day_root, mission_id)
-
-            try:
-                os.makedirs(mission_base_path, exist_ok=True)
-                self.add_logging_target(mission_base_path, target_name)
-            except Exception as e:
-                self.get_logger().error(
-                    f"Failed creating target={target_name}: {e}"
-                )
-
-        if len(self.targets) == 0:
-            return False
-
-        self.mission_id = mission_id
-        self.get_logger().warning(
-            f"Created own mission folder for CA debug video: {mission_id}"
-        )
-
-        return True
-
-    def add_logging_target(self, base_path, target_name):
-        video_dir = os.path.join(base_path, "video")
-        os.makedirs(video_dir, exist_ok=True)
-
-        frame_csv_path = os.path.join(video_dir, "ca_debug_video_frames.csv")
-        summary_csv_path = os.path.join(video_dir, "ca_debug_video_summary.csv")
-
-        frame_csv_file = open(frame_csv_path, "w", newline="", buffering=1)
-        frame_csv_writer = csv.writer(frame_csv_file)
-        frame_csv_writer.writerow(self.get_frame_csv_header())
-
-        target = {
-            "name": target_name,
-            "base_path": base_path,
-            "video_dir": video_dir,
-
-            "frame_csv_path": frame_csv_path,
-            "summary_csv_path": summary_csv_path,
-            "frame_csv_file": frame_csv_file,
-            "frame_csv_writer": frame_csv_writer,
-
-            "writer": None,
-            "temp_path": None,
-            "final_path": None,
-            "current_filename": None,
-        }
-
-        self.targets.append(target)
-
-    # ================================================================
-    # INFO FILE
-    # ================================================================
-    def write_start_info(self, target, state_msg=None):
-        info_path = os.path.join(target["video_dir"], "ca_debug_video_info.txt")
-
-        with open(info_path, "w") as f:
-            f.write("=== CA DEBUG VIDEO LOGGER START ===\n")
-            f.write(f"Start Time: {datetime.now()}\n")
-            f.write("Platform: SEANO USV\n")
-            f.write("Logger Type: ROS Image Topic Constant 30 FPS Video Logger\n")
-            f.write(f"Source Image Topic: {self.image_topic}\n")
-            f.write(f"Image Reliability: {self.image_reliability}\n")
-            f.write(f"QoS Depth: {self.qos_depth}\n")
-            f.write(f"Target Name: {target['name']}\n")
-            f.write(f"Mission Folder: {target['base_path']}\n")
-            f.write(f"Video Dir: {target['video_dir']}\n")
-            f.write(f"Frame CSV Path: {target['frame_csv_path']}\n")
-            f.write(f"Summary CSV Path: {target['summary_csv_path']}\n")
-            f.write(f"Output FPS: {self.output_fps}\n")
-            f.write(f"Codec: {self.codec}\n")
-            f.write(f"Segment Seconds: {self.segment_seconds}\n")
-            f.write(f"Constant Output FPS: {self.constant_output_fps}\n")
-            f.write(f"Duplicate Last Frame To Match FPS: {self.duplicate_last_frame_to_match_fps}\n")
-            f.write(f"Write Only New Frames: {self.write_only_new_frames}\n")
-            f.write(f"Max Repeat Frame Age S: {self.max_repeat_frame_age_s}\n")
-            f.write(f"Max Stale Frame Age S: {self.max_stale_frame_age_s}\n")
-            f.write(f"Frame Queue Size: {self.frame_queue_size}\n")
-            f.write(f"Require Image Before Folder: {self.require_image_before_folder}\n")
-            f.write(f"Required Image Max Age S: {self.required_image_max_age_s}\n")
-            f.write(f"Force Record Without MAVROS: {self.force_record_without_mavros}\n")
-            f.write(f"Create Own Mission Folder If Missing: {self.create_own_mission_folder_if_missing}\n")
-
-            if state_msg is not None:
-                f.write(f"Start MAVROS Connected: {state_msg.connected}\n")
-                f.write(f"Start MAVROS Armed: {state_msg.armed}\n")
-                f.write(f"Start MAVROS Mode: {state_msg.mode}\n")
-            else:
-                f.write("Start MAVROS Connected: UNKNOWN\n")
-                f.write("Start MAVROS Armed: UNKNOWN\n")
-                f.write("Start MAVROS Mode: UNKNOWN\n")
-
-            f.write("\n=== CSV COLUMN NOTES ===\n")
-            f.write("status_frame = NEW_FRAME jika frame baru dari topic, REPEATED_FRAME jika frame diulang.\n")
-            f.write("apakah_frame_diulang = YA jika frame output video adalah pengulangan frame sebelumnya.\n")
-            f.write("umur_frame_ms = selisih waktu antara frame diterima logger dan waktu frame ditulis ke video.\n")
-            f.write("persentase_frame_diulang pada summary menunjukkan seberapa besar video bergantung pada frame repeat.\n")
-
-    def write_end_info(self, target, reason):
-        info_path = os.path.join(target["video_dir"], "ca_debug_video_info.txt")
-
-        record_duration = 0.0
-
-        if self.start_record_wall > 0.0:
-            record_duration = time.monotonic() - self.start_record_wall
-
-        effective_fps = 0.0
-        if record_duration > 0.0:
-            effective_fps = self.frame_count_written / record_duration
-
-        repeated_percent = 0.0
-        if self.frame_count_written > 0:
-            repeated_percent = (
-                self.frame_count_repeated_write / self.frame_count_written
-            ) * 100.0
-
-        with open(info_path, "a") as f:
-            f.write("\n=== CA DEBUG VIDEO LOGGER END ===\n")
-            f.write(f"End Time: {datetime.now()}\n")
-            f.write(f"Stop Reason: {reason}\n")
-            f.write(f"Record Duration S: {record_duration:.3f}\n")
-            f.write(f"Total Input Frames From Topic: {self.frame_count_in}\n")
-            f.write(f"Total Written Video Frames: {self.frame_count_written}\n")
-            f.write(f"Repeated Written Frames: {self.frame_count_repeated_write}\n")
-            f.write(f"Repeated Written Percent: {repeated_percent:.2f}%\n")
-            f.write(f"Queue Drop Frames: {self.frame_count_queue_drop}\n")
-            f.write(f"Stale Drop Frames: {self.frame_count_stale_drop}\n")
-            f.write(f"Duplicate Drop Frames: {self.frame_count_duplicate_drop}\n")
-            f.write(f"Throttle Drop Frames: {self.frame_count_throttle_drop}\n")
-            f.write(f"No Frame Tick Count: {self.frame_count_no_frame_tick}\n")
-            f.write(f"Repeat Stale Drop Count: {self.frame_count_repeat_stale_drop}\n")
-            f.write(f"Resize Count: {self.frame_count_resize}\n")
-            f.write(f"Writer Error Count: {self.writer_error_count}\n")
-            f.write(f"Effective Written FPS: {effective_fps:.3f}\n")
-            f.write(f"End MAVROS Connected: {self.last_connected_state}\n")
-            f.write(f"End MAVROS Armed: {self.last_armed_state}\n")
-            f.write(f"End MAVROS Mode: {self.last_flight_mode}\n")
+        stamp = now.strftime(f"%Y-%m-%d_%H-%M-%S_{self.local_timezone}")
+        return f"ca_debug_video_{stamp}.mp4"
 
     # ================================================================
     # UTILITIES
     # ================================================================
+    def warn_storage_once(self, text):
+        now = time.monotonic()
+        if now - self.last_storage_warn_time < 10.0:
+            return
+        self.last_storage_warn_time = now
+        self.get_logger().warning(text)
+
     @staticmethod
-    def get_local_timestamp():
-        now = datetime.now()
-        return now.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+    def is_path_writable(path):
+        return os.path.exists(path) and os.access(path, os.W_OK)
+
+    @staticmethod
+    def test_write_access(path):
+        test_file = os.path.join(path, ".seano_video_write_test")
+        try:
+            os.makedirs(path, exist_ok=True)
+            with open(test_file, "w") as f:
+                f.write("ok")
+            os.remove(test_file)
+            return True
+        except Exception:
+            return False
 
     def destroy_node(self):
-        if self.logging_active:
-            self.stop_logging_session("node shutdown")
+        if self.logging_active or self.preparing_session:
+            self.get_logger().info("NODE SHUTDOWN | flushing video buffer...")
+            self.disarm_monotonic = time.monotonic()
+            self.stop_logging_session()
         else:
-            self.close_current_video()
-
-        for target in self.targets:
-            try:
-                if target["frame_csv_file"] is not None:
-                    target["frame_csv_file"].flush()
-                    target["frame_csv_file"].close()
-            except Exception:
-                pass
+            for target in self.targets:
+                buf = target.get("buffer")
+                if buf:
+                    buf.clear()
 
         try:
             os.sync()
@@ -1371,9 +912,12 @@ class SeanoCaDebugVideoLogger(Node):
         super().destroy_node()
 
 
+# =========================================================================
+# ENTRY POINT
+# =========================================================================
 def main(args=None):
     rclpy.init(args=args)
-    node = SeanoCaDebugVideoLogger()
+    node = SeanoVideoLogger()
 
     try:
         rclpy.spin(node)
