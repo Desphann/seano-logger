@@ -1,0 +1,18 @@
+[0.000000] (-) TimerEvent: {}
+[0.000908] (seano_logger) JobQueued: {'identifier': 'seano_logger', 'dependencies': OrderedDict()}
+[0.001636] (seano_sensors) JobQueued: {'identifier': 'seano_sensors', 'dependencies': OrderedDict()}
+[0.001975] (seano_logger) JobStarted: {'identifier': 'seano_logger'}
+[0.022593] (seano_sensors) JobStarted: {'identifier': 'seano_sensors'}
+[0.099152] (-) TimerEvent: {}
+[0.200158] (-) TimerEvent: {}
+[0.301149] (-) TimerEvent: {}
+[0.402130] (-) TimerEvent: {}
+[0.503102] (-) TimerEvent: {}
+[0.604207] (-) TimerEvent: {}
+[0.705453] (-) TimerEvent: {}
+[0.806433] (-) TimerEvent: {}
+[0.907412] (-) TimerEvent: {}
+[1.008401] (-) TimerEvent: {}
+[1.047243] (seano_sensors) JobEnded: {'identifier': 'seano_sensors', 'rc': 0}
+[1.051306] (seano_logger) JobEnded: {'identifier': 'seano_logger', 'rc': 'SIGINT'}
+[1.063665] (-) EventReactorShutdown: {}

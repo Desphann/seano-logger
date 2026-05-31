@@ -8,6 +8,9 @@ Sesuaikan self.external_mount_point dengan lokasi SSD di device yang dipakai.
 sudo mount /dev/sda1 /mnt/seano
 sudo umount /mnt/seano
 
+sudo mount.exfat-fuse -o uid=$(id -u),gid=$(id -g),umask=002 /dev/disk/by-uuid/4028-495B /mnt/seano/SEANO_SSD
+mountpoint /mnt/seano/SEANO_SSD
+
 colcon build 
 source install/setup.bash
 
@@ -19,6 +22,7 @@ systemctl status seano_logger
 
 sudo systemctl restart seano_logger
 journalctl -u seano_logger -f
+
 
 
 
